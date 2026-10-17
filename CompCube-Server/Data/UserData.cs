@@ -25,40 +25,17 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
     public List<UserStatistics> GetLeaderboardRange(int start, int range, int season = -1)
     {
-        using var scope = scopeFactory.CreateScope();
-        
-        var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
         if (season == -1)
             season = configHelper.Season;
 
-        return context.Users
-            .Include(p => p.CompetetiveStatistics)
-            .Include(p => p.Flair)
-            .Where(p => p.CompetetiveStatistics.Any(i => i.Season == season))
-            .OrderBy(p => p.CompetetiveStatistics.First(i => i.Season == season).Elo)
-            .Skip(start - 1)
-            .Take(range)
-            .ToArray()
-            .Select(i =>
-            {
-                var stats = i.CompetetiveStatistics.First(j => j.Season == season);
+        range = Math.Min(range, 10);
 
-                return new UserStatistics(i.Username, 
-                    i.PlatformId, 
-                    i.BeatKhanaId, 
-                    i.AvatarUrl, 
-                    GetFlairFromModel(i.Flair),
-                    i.Banned,
-                    GetRankFromElo(stats.Elo, season, context),
-                    stats.Elo,
-                    stats.Wins,
-                    stats.TotalGamesPlayed,
-                    stats.WinStreak,
-                    stats.BestWinStreak);
-            }).ToList();
+        var users = GetAllUserStatistics(season).Where(i => i.Rank >= start).ToArray();
+        Array.Resize(ref users, Math.Min(users.Length, range));
+
+        return users.ToList();
     }
-    
+
     public List<UserStatistics>? GetAroundUser(string platformId, int season = -1)
     {
         if (season == -1)
