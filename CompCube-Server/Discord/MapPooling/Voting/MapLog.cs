@@ -6,7 +6,7 @@ using NetCord.Rest;
 
 namespace CompCube_Server.Discord.MapPooling.Voting;
 
-public class MapLog(RestClient restClient, BeatSaverApiWrapper beatSaver, DiscordConfigHelper configHelper)
+public class MapLog(RestClient restClient, BeatSaverService beatSaver, DiscordConfigHelper configHelper)
 {
     public async Task LogQueuedBeatmap(GuildThread thread)
     {

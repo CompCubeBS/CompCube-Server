@@ -27,6 +27,8 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
     private Score? _cachedScore = null;
 
     private int _currentRound = 0;
+
+    private VotingMap? _lastMapPick = null;
     
     public void Init(MatchSettings matchSettings, IConnectedClient red, IConnectedClient blue)
     {
@@ -131,6 +133,8 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
             client.OnDidPickMap -= HandlePickerDidPickMap;
 
             var other = client.IsRed ? _blue : _red;
+
+            _lastMapPick = map;
             
             client.OnClientSubmittedScore += HandleClientSubmittedScore;
             other.OnClientSubmittedScore += HandleClientSubmittedScore;
@@ -162,7 +166,7 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
         
             var loser = redScore.Points > blueScore.Points ? _blue : _red;
         
-            loser.Damage(difference, GetMultiplierFromRound(_currentRound));
+            loser.Damage(CurveDamageDifference(difference, _lastMapPick.MapCategory), GetMultiplierFromRound(_currentRound));
 
             if (loser.Health == 0)
             {
@@ -237,6 +241,15 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
             return 1f;
 
         return round * 1.5f;
+    }
+
+    private static float CurveDamageDifference(float relativePercent, VotingMap.Category category)
+    {
+        return category switch
+        {
+            VotingMap.Category.Extreme => (0.8f * relativePercent) / (.0286f + relativePercent),
+            _ => relativePercent
+        };
     }
 
     private int ComputeEloChange(UserStatistics winner, UserStatistics loser)

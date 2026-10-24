@@ -1,5 +1,6 @@
 ﻿using System.Net.WebSockets;
 using CompCube_Models.Models.Packets.ServerPackets;
+using CompCube_Server.Api.BeatSaver;
 using CompCube_Server.Config;
 using CompCube_Server.Data;
 using CompCube_Server.Interfaces;
@@ -14,7 +15,8 @@ public partial class ConnectionManager(
     QueueManager queueManager,
     ClientFactory clientFactory,
     TimeoutManager timeoutManager,
-    ConfigHelper config)
+    ConfigHelper config,
+    BeatKhanaService beatKhanaService)
     : ControllerBase
 {
     private readonly List<IConnectedClient> _connectedClients = [];
@@ -30,17 +32,29 @@ public partial class ConnectionManager(
 
         var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 
-        if (!HttpContext.Request.Headers.TryGetValue("UserId", out var userIdHeader) || 
-            !HttpContext.Request.Headers.TryGetValue("UserName", out var usernameHeader) || 
-            !HttpContext.Request.Headers.TryGetValue("AvatarUrl", out var avatarUrlHeader))
+        if (!HttpContext.Request.Headers.TryGetValue("Authorization", out var tokenValues))
+        {
+            if (HttpContext.Response.HasStarted)
+                return;
+            
+            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            return;
+        }
+
+        var token = tokenValues.First()?["Bearer ".Length..];
+
+        if (token == null)
         {
             HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             return;
         }
-        
-        var userId = userIdHeader.First() ?? throw new Exception("No UserId!");
-        var username = usernameHeader.First() ?? throw new Exception("No UserName!");
-        var avatarUrl = avatarUrlHeader.First() ?? throw new Exception("No Avatar Url!");
+
+        var claims = await beatKhanaService.VerifyAccessToken(token);
+
+        var user = userData.UpsertFromBeatKhanaToken(claims, config.BeatKhanaLinkingUrl);
+
+        var userId = user.PlatformId;
+        var username = user.Username;
         
         if (_connectedClients.Any(i => i.UserStatistics.PlatformId == userId))
         {
@@ -51,7 +65,14 @@ public partial class ConnectionManager(
         
         var tcs = new TaskCompletionSource();
 
-        var userInfo = userData.UpdateUserOnLogin(userId, username, avatarUrl);
+        var userInfo = userData.GetUserStatisticsByPlatformId(userId);
+
+        if (userInfo == null)
+        {
+            await websocket.SendAsync(new ArraySegment<byte>(new AbruptDisconnectionPacket("UserData does not exist!").SerializeToBytes()), WebSocketMessageType.Text, true, CancellationToken.None);
+            await websocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+            return;
+        }
 
         var connectedClient = clientFactory.Create(userInfo, websocket, tcs);
         

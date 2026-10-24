@@ -84,6 +84,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
             });
 
             context.SaveChanges();
+            transaction.Commit();
         }
         catch (Exception ex)
         {

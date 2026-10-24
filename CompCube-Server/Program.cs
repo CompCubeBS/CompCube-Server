@@ -125,7 +125,8 @@ public class Program
         services.AddSingleton<IQueue, StandardCasualQueue>();
         services.AddSingleton<IQueue, StandardCompetitiveQueue>();
 
-        services.AddSingleton<BeatSaverApiWrapper>();
+        services.AddSingleton<BeatSaverService>();
+        services.AddSingleton<BeatKhanaService>();
 
         services.AddSingleton<LeaderboardApiController>();
         services.AddSingleton<MapApiController>();

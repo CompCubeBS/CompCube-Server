@@ -10,6 +10,7 @@ public class User
     [MaxLength(36)]
     public required string Guid { get; set; }
 
+    [MaxLength(60)]
     public string? BeatKhanaId { get; set; } = null;
     
     [Required]
@@ -21,7 +22,7 @@ public class User
     public required string Username { get; set; }
 
     [Required]
-    [MaxLength(50)]
+    [MaxLength(128)]
     public required string AvatarUrl { get; set; } = "https://cdn.scoresaber.com/avatars/oculus.png?v=1781213201";
 
     [Required]

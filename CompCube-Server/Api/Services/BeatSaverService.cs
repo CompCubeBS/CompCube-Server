@@ -5,7 +5,7 @@ using CompCube_Server.Data;
 
 namespace CompCube_Server.Api.BeatSaver;
 
-public class BeatSaverApiWrapper(MapData mapData, ILogger<BeatSaverApiWrapper> logger)
+public class BeatSaverService(MapData mapData, ILogger<BeatSaverService> logger)
 {
     private readonly BeatSaverSharp.BeatSaver _beatSaver = new(new BeatSaverOptions("CompCube-Server", new Version("1.0.0")));
 

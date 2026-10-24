@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 namespace CompCube_Server.Api.Controllers;
 
 [ApiController]
-public class MapApiController(MapData mapData, BeatmapPoolData beatmapPoolData, BeatSaverApiWrapper beatSaver, ConfigHelper config) : ControllerBase
+public class MapApiController(MapData mapData, BeatmapPoolData beatmapPoolData, BeatSaverService beatSaver, ConfigHelper config) : ControllerBase
 {
     public static readonly string BeatmapsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "Beatmaps");
 

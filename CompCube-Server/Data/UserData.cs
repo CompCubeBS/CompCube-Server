@@ -1,6 +1,7 @@
 using CompCube_Models.Models.ClientData;
 using CompCube_Server.Config;
 using CompCube_Server.Data.Schema;
+using CompCube_Server.Models.CompCube_Models.Models.Auth.BeatKhana;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -24,40 +25,17 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
     public List<UserStatistics> GetLeaderboardRange(int start, int range, int season = -1)
     {
-        using var scope = scopeFactory.CreateScope();
-        
-        var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
         if (season == -1)
             season = configHelper.Season;
 
-        return context.Users
-            .Include(p => p.CompetetiveStatistics)
-            .Include(p => p.Flair)
-            .Where(p => p.CompetetiveStatistics.Any(i => i.Season == season))
-            .OrderBy(p => p.CompetetiveStatistics.First(i => i.Season == season).Elo)
-            .Skip(start - 1)
-            .Take(range)
-            .ToArray()
-            .Select(i =>
-            {
-                var stats = i.CompetetiveStatistics.First(j => j.Season == season);
+        range = Math.Min(range, 10);
 
-                return new UserStatistics(i.Username, 
-                    i.PlatformId, 
-                    i.BeatKhanaId, 
-                    i.AvatarUrl, 
-                    GetFlairFromModel(i.Flair),
-                    i.Banned,
-                    GetRankFromElo(stats.Elo, season, context),
-                    stats.Elo,
-                    stats.Wins,
-                    stats.TotalGamesPlayed,
-                    stats.WinStreak,
-                    stats.BestWinStreak);
-            }).ToList();
+        var users = GetAllUserStatistics(season).Where(i => i.Rank >= start).ToArray();
+        Array.Resize(ref users, Math.Min(users.Length, range));
+
+        return users.ToList();
     }
-    
+
     public List<UserStatistics>? GetAroundUser(string platformId, int season = -1)
     {
         if (season == -1)
@@ -93,7 +71,64 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         }).ToList();
     }
 
-    public UserStatistics UpdateUserOnLogin(string platformId, string username, string avatarUrl)
+    public UserInfo UpsertFromBeatKhanaToken(TokenClaims claims, string linkingUrl)
+    {
+        if (claims.Guid != null)
+            return UpsertFromBeatKhana(claims.PlatformId!, claims.Guid, claims.GlobalName ?? claims.Username, claims.AvatarUrl!, linkingUrl);
+
+        if (claims.PlatformId == null)
+            throw new Exception("Token has no usable identity!");
+        
+        return UpsertPluginAccount(claims.PlatformId, claims.Username);
+    }
+
+    public UserInfo UpsertFromBeatKhana(string platformId, string beatKhanaGuid, string userName, string avatarUrl, string linkingUrl)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetService<DataContext>()!;
+
+        try
+        {
+            var user = context.Users.FirstOrDefault(p => p.PlatformId == platformId);
+
+            if (user == null)
+            {
+                user = new User()
+                {
+                    Guid = Guid.NewGuid().ToString(),
+                    PlatformId = platformId,
+                    Username = userName,
+                    AvatarUrl = avatarUrl,
+                    BeatKhanaId = beatKhanaGuid,
+                };
+                
+                context.Users.Add(user);
+                
+                CreateNewCompetitiveStatisticsIfNotExists(user, context);
+
+                context.SaveChanges();
+
+                return GetUserInfoFromUserModel(user)!;
+            }
+
+            user.Username = userName;
+            user.AvatarUrl = avatarUrl;
+            user.BeatKhanaId = beatKhanaGuid;
+            
+            CreateNewCompetitiveStatisticsIfNotExists(user, context);
+
+            context.SaveChanges();
+
+            return GetUserInfoFromUserModel(user)!;
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to upsert user from BeatKhana");
+            throw;
+        }
+    }
+
+    public UserInfo UpsertPluginAccount(string platformId, string username)
     {
         using var scope = scopeFactory.CreateScope();
         
@@ -112,31 +147,27 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
                     Guid = Guid.NewGuid().ToString(),
                     PlatformId = platformId,
                     Username = username,
-                    AvatarUrl = avatarUrl,
+                    AvatarUrl = "https://cdn.scoresaber.com/avatars/oculus.png?v=1781213201",
                     Banned = false,
                     Created = DateTime.UtcNow,
                     Updated = DateTime.UtcNow,
                 });
 
-                context.SaveChanges();
-
                 user = context.Users.Include(p => p.CompetetiveStatistics).First(p => p.PlatformId == platformId);
 
-                CreateNewCompetitiveStatisticsIfNotExists(user.PlatformId, context);
+                CreateNewCompetitiveStatisticsIfNotExists(user, context);
 
                 context.SaveChanges();
 
-                transaction.Commit();
                 return GetUserStatisticsByPlatformId(platformId)!;
             }
 
-            user.AvatarUrl = avatarUrl;
+            user.AvatarUrl = "https://cdn.scoresaber.com/avatars/oculus.png?v=1781213201";
             user.Username = username;
             
-            CreateNewCompetitiveStatisticsIfNotExists(user.PlatformId, context);
+            CreateNewCompetitiveStatisticsIfNotExists(user, context);
 
             context.SaveChanges();
-            transaction.Commit();
 
             return GetUserStatisticsByPlatformId(platformId)!;
         }
@@ -147,16 +178,9 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         }
     }
 
-    private void CreateNewCompetitiveStatisticsIfNotExists(string platformId, DataContext context)
+    private void CreateNewCompetitiveStatisticsIfNotExists(User user, DataContext context)
     {
-        var userToCreateFor = context.Users
-            .Include(i => i.CompetetiveStatistics)
-            .FirstOrDefault(i => i.PlatformId == platformId);
-
-        if (userToCreateFor == null)
-            return;
-
-        if (userToCreateFor.CompetetiveStatistics.Any(i => i.Season == configHelper.Season))
+        if (user.CompetetiveStatistics.Any(i => i.Season == configHelper.Season))
             return;
 
         context.CompetitiveStatistics.Add(new CompetetiveStatistics()
@@ -168,10 +192,8 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             TotalGamesPlayed = 0,
             WinStreak = 0,
             Wins = 0,
-            User = userToCreateFor
+            User = user
         });
-
-        context.SaveChanges();
     }
 
     public void IncrementWins(string platformId)
@@ -179,8 +201,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         using var scope = scopeFactory.CreateScope();
         
         var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
-        using var transaction = context.Database.BeginTransaction();
 
         try
         {
@@ -194,18 +214,15 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             var stats = user.CompetetiveStatistics.First(i => i.Season == configHelper.Season);
 
             stats.WinStreak++;
-            context.SaveChanges();
 
             stats.Wins++;
-            context.SaveChanges();
             
             if (stats.WinStreak > stats.BestWinStreak)
             {
                 stats.BestWinStreak = stats.WinStreak;
-                context.SaveChanges();
             }
 
-            transaction.Commit();
+            context.SaveChanges();
         }
         catch (Exception e)
         {
@@ -219,8 +236,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         using var scope = scopeFactory.CreateScope();
         
         var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
-        using var transaction = context.Database.BeginTransaction();
         
         try
         {
@@ -236,7 +251,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             stats.Elo += eloChange;
             context.SaveChanges();
 
-            transaction.Commit();
         }
         catch (Exception e)
         {
@@ -250,8 +264,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         using var scope = scopeFactory.CreateScope();
         
         var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
-        using var transaction = context.Database.BeginTransaction();
 
         try
         {
@@ -266,8 +278,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
             stats.WinStreak = 0;
             context.SaveChanges();
-
-            transaction.Commit();
         }
         catch (Exception e)
         {
@@ -281,8 +291,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         using var scope = scopeFactory.CreateScope();
         
         var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
-        using var transaction = context.Database.BeginTransaction();
 
         try
         {
@@ -298,7 +306,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
                 .TotalGamesPlayed++;
 
             context.SaveChanges();
-            transaction.Commit();
         }
         catch (Exception e)
         {
@@ -353,6 +360,8 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
         if (user == null)
             return null;
+        
+        Console.WriteLine("here");
         
         var stats = user.CompetetiveStatistics.FirstOrDefault(i => i.Season == season);
 

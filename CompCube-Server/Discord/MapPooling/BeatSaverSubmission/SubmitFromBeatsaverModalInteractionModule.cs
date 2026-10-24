@@ -6,7 +6,7 @@ using NetCord.Services.ComponentInteractions;
 
 namespace CompCube_Server.Discord.MapPooling;
 
-public class SubmitFromBeatsaverModalInteractionModule(IConfiguration config, RestClient client, BeatSaverApiWrapper beatSaverApi) : ComponentInteractionModule<ModalInteractionContext>
+public class SubmitFromBeatsaverModalInteractionModule(IConfiguration config, RestClient client, BeatSaverService beatSaverApi) : ComponentInteractionModule<ModalInteractionContext>
 {
     [ComponentInteraction("submitMapFromBeatsaverModal")]
     public async Task SubmitMapFromBeatsaverModalInteraction()
