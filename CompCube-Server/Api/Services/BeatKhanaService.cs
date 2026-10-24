@@ -4,6 +4,7 @@ using System.Text;
 using System.Web;
 using CompCube_Server.Config;
 using CompCube_Server.Models.CompCube_Models.Models.Auth.BeatKhana;
+using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -25,7 +26,7 @@ public class BeatKhanaService(ConfigHelper config, ILogger<BeatKhanaService> log
         query["response_type"] = "code";
         query["client_id"] = config.BeatKhanaClientId;
         query["redirect_uri"] = config.BeatKhanaCallbackUrl;
-        query["scope"] = config.BeatKhanaScope;
+        query["scope"] = "compcube";
         query["state"] = state;
         
         uri.Query = query.ToString();
@@ -78,14 +79,14 @@ public class BeatKhanaService(ConfigHelper config, ILogger<BeatKhanaService> log
         if (parts.Length != 3)
             throw new Exception("Malformed BeatKhana token");
 
-        var header = JObject.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(parts[0])));
+        var header = JObject.Parse(Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(parts[0])));
 
         if (!header.ContainsKey("alg") && header["alg"]?.Value<string>() != "RS256")
             throw new Exception("Unexpected JWT Algorithm");
 
         var dataBytes = Encoding.UTF8.GetBytes($"{parts[0]}.{parts[1]}");
 
-        var signatureBytes = Convert.FromBase64String(parts[2]);
+        var signatureBytes = WebEncoders.Base64UrlDecode(parts[2]);
 
         var validSignature =
             _publicKey?.VerifyData(dataBytes, signatureBytes, HashAlgorithmName.SHA256,
@@ -93,8 +94,8 @@ public class BeatKhanaService(ConfigHelper config, ILogger<BeatKhanaService> log
 
         if (!validSignature)
             throw new Exception("Invalid JWT signature");
-
-        var claims = JObject.Parse(parts[1]);
+        
+        var claims = JObject.Parse(Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(parts[1])));
 
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 

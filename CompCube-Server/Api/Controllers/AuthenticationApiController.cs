@@ -31,7 +31,7 @@ public class AuthenticationApiController(
 
             Random.NextBytes(bytes);
 
-            var state = Convert.ToBase64String(bytes);
+            var state = WebEncoders.Base64UrlEncode(bytes);
 
             returnTo = returnTo.StartsWith('/') &&
                        !returnTo.StartsWith("//")

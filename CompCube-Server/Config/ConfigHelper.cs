@@ -10,7 +10,7 @@ public class ConfigHelper(IConfiguration config)
     
     public string BeatKhanaCallbackUrl => config.GetSection("BeatKhana").GetValue<string>("CallbackUrl") ?? throw new Exception("Could not get BeatKhana CallbackUrl from config!");
     
-    public string BeatKhanaScope => config.GetSection("BeatKhana").GetValue<string>("Scope") ?? throw new Exception("Could not get BeatKhana Scope from config!");
+    public string[] BeatKhanaScope => config.GetSection("BeatKhana").GetSection("Scope").Get<string[]>() ?? throw new Exception("Could not get BeatKhana Scope from config!");
     
     public string BeatKhanaApiUrl => config.GetSection("BeatKhana").GetValue<string>("ApiUrl") ?? throw new Exception("Could not get BeatKhana ApiUrl from config!");
 
