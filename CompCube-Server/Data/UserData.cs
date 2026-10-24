@@ -104,7 +104,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
                 
                 context.Users.Add(user);
                 
-                CreateNewCompetitiveStatisticsIfNotExists(platformId, context);
+                CreateNewCompetitiveStatisticsIfNotExists(user, context);
 
                 context.SaveChanges();
 
@@ -115,7 +115,9 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             user.AvatarUrl = avatarUrl;
             user.BeatKhanaId = beatKhanaGuid;
             
-            CreateNewCompetitiveStatisticsIfNotExists(platformId, context);
+            CreateNewCompetitiveStatisticsIfNotExists(user, context);
+
+            context.SaveChanges();
 
             return GetUserInfoFromUserModel(user)!;
         }
@@ -153,7 +155,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
                 user = context.Users.Include(p => p.CompetetiveStatistics).First(p => p.PlatformId == platformId);
 
-                CreateNewCompetitiveStatisticsIfNotExists(user.PlatformId, context);
+                CreateNewCompetitiveStatisticsIfNotExists(user, context);
 
                 context.SaveChanges();
 
@@ -163,7 +165,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             user.AvatarUrl = "https://cdn.scoresaber.com/avatars/oculus.png?v=1781213201";
             user.Username = username;
             
-            CreateNewCompetitiveStatisticsIfNotExists(user.PlatformId, context);
+            CreateNewCompetitiveStatisticsIfNotExists(user, context);
 
             context.SaveChanges();
 
@@ -176,16 +178,9 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         }
     }
 
-    private void CreateNewCompetitiveStatisticsIfNotExists(string platformId, DataContext context)
+    private void CreateNewCompetitiveStatisticsIfNotExists(User user, DataContext context)
     {
-        var userToCreateFor = context.Users
-            .Include(i => i.CompetetiveStatistics)
-            .FirstOrDefault(i => i.PlatformId == platformId);
-
-        if (userToCreateFor == null)
-            return;
-
-        if (userToCreateFor.CompetetiveStatistics.Any(i => i.Season == configHelper.Season))
+        if (user.CompetetiveStatistics.Any(i => i.Season == configHelper.Season))
             return;
 
         context.CompetitiveStatistics.Add(new CompetetiveStatistics()
@@ -197,7 +192,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             TotalGamesPlayed = 0,
             WinStreak = 0,
             Wins = 0,
-            User = userToCreateFor
+            User = user
         });
     }
 
@@ -365,6 +360,8 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
         if (user == null)
             return null;
+        
+        Console.WriteLine("here");
         
         var stats = user.CompetetiveStatistics.FirstOrDefault(i => i.Season == season);
 
