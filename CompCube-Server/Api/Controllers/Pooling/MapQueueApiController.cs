@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CompCube_Server.Api.Controllers.Pooling;
 
 [ApiController]
-public class QueueApiController(ConfigHelper helper, BeatmapPoolData queue) : ControllerBase
+public class MapQueueApiController(ConfigHelper helper, BeatmapPoolData queue) : ControllerBase
 {
     [HttpGet("/api/queue")]
     [ProducesResponseType(StatusCodes.Status200OK)]
