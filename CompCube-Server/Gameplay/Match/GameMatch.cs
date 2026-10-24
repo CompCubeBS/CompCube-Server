@@ -245,11 +245,14 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
 
     private static float CurveDamageDifference(float relativePercent, VotingMap.Category category)
     {
-        return category switch
+        var curved = category switch
         {
-            VotingMap.Category.Extreme => (0.8f * relativePercent) / (.0286f + relativePercent),
+            VotingMap.Category.Extreme => 1.8868f * Math.Pow(relativePercent, .4587f),
+            VotingMap.Category.Accuracy => 2.1513f * Math.Pow(relativePercent, 0.352641f),
             _ => relativePercent
         };
+
+        return (float) Math.Clamp(0, curved, 1);
     }
 
     private int ComputeEloChange(UserStatistics winner, UserStatistics loser)
