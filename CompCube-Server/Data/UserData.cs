@@ -86,8 +86,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
     {
         using var scope = scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
-        using var transaction = context.Database.BeginTransaction();
 
         try
         {
@@ -105,11 +103,10 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
                 };
                 
                 context.Users.Add(user);
-                context.SaveChanges();
                 
                 CreateNewCompetitiveStatisticsIfNotExists(platformId, context);
-                
-                transaction.Commit();
+
+                context.SaveChanges();
 
                 return GetUserInfoFromUserModel(user)!;
             }
@@ -117,12 +114,8 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             user.Username = userName;
             user.AvatarUrl = avatarUrl;
             user.BeatKhanaId = beatKhanaGuid;
-
-            context.SaveChanges();
             
             CreateNewCompetitiveStatisticsIfNotExists(platformId, context);
-            
-            transaction.Commit();
 
             return GetUserInfoFromUserModel(user)!;
         }
@@ -158,15 +151,12 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
                     Updated = DateTime.UtcNow,
                 });
 
-                context.SaveChanges();
-
                 user = context.Users.Include(p => p.CompetetiveStatistics).First(p => p.PlatformId == platformId);
 
                 CreateNewCompetitiveStatisticsIfNotExists(user.PlatformId, context);
 
                 context.SaveChanges();
 
-                transaction.Commit();
                 return GetUserStatisticsByPlatformId(platformId)!;
             }
 
@@ -176,7 +166,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             CreateNewCompetitiveStatisticsIfNotExists(user.PlatformId, context);
 
             context.SaveChanges();
-            transaction.Commit();
 
             return GetUserStatisticsByPlatformId(platformId)!;
         }
@@ -210,8 +199,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             Wins = 0,
             User = userToCreateFor
         });
-
-        context.SaveChanges();
     }
 
     public void IncrementWins(string platformId)
@@ -219,8 +206,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         using var scope = scopeFactory.CreateScope();
         
         var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
-        using var transaction = context.Database.BeginTransaction();
 
         try
         {
@@ -234,18 +219,15 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             var stats = user.CompetetiveStatistics.First(i => i.Season == configHelper.Season);
 
             stats.WinStreak++;
-            context.SaveChanges();
 
             stats.Wins++;
-            context.SaveChanges();
             
             if (stats.WinStreak > stats.BestWinStreak)
             {
                 stats.BestWinStreak = stats.WinStreak;
-                context.SaveChanges();
             }
 
-            transaction.Commit();
+            context.SaveChanges();
         }
         catch (Exception e)
         {
@@ -259,8 +241,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         using var scope = scopeFactory.CreateScope();
         
         var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
-        using var transaction = context.Database.BeginTransaction();
         
         try
         {
@@ -276,7 +256,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             stats.Elo += eloChange;
             context.SaveChanges();
 
-            transaction.Commit();
         }
         catch (Exception e)
         {
@@ -290,8 +269,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         using var scope = scopeFactory.CreateScope();
         
         var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
-        using var transaction = context.Database.BeginTransaction();
 
         try
         {
@@ -306,8 +283,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
             stats.WinStreak = 0;
             context.SaveChanges();
-
-            transaction.Commit();
         }
         catch (Exception e)
         {
@@ -321,8 +296,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         using var scope = scopeFactory.CreateScope();
         
         var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
-        using var transaction = context.Database.BeginTransaction();
 
         try
         {
@@ -338,7 +311,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
                 .TotalGamesPlayed++;
 
             context.SaveChanges();
-            transaction.Commit();
         }
         catch (Exception e)
         {

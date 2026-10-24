@@ -22,7 +22,7 @@ public class User
     public required string Username { get; set; }
 
     [Required]
-    [MaxLength(50)]
+    [MaxLength(128)]
     public required string AvatarUrl { get; set; } = "https://cdn.scoresaber.com/avatars/oculus.png?v=1781213201";
 
     [Required]
