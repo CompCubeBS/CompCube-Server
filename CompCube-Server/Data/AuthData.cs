@@ -14,8 +14,6 @@ public class AuthData(IServiceScope scopeService, ILogger<AuthData> logger)
 
             var context = scope.ServiceProvider.GetService<DataContext>()!;
 
-            using var transaction = context.Database.BeginTransaction();
-
             var oauthState = new AuthState()
             {
                 StateHash = Hash(state),
@@ -28,7 +26,6 @@ public class AuthData(IServiceScope scopeService, ILogger<AuthData> logger)
             context.AuthStates.Add(oauthState);
 
             context.SaveChanges();
-            transaction.Commit();
         }
         catch (Exception ex)
         {
@@ -49,14 +46,11 @@ public class AuthData(IServiceScope scopeService, ILogger<AuthData> logger)
 
         if (authState == null)
             return null;
-        
-        using var transaction = context.Database.BeginTransaction();
 
         try
         {
             authState.ConsumedAt = DateTime.UtcNow;
             context.SaveChanges();
-            transaction.Commit();
             
             return authState;
         }

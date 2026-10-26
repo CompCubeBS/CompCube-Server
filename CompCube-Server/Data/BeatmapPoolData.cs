@@ -11,8 +11,6 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         using var scope = scopeFactory.CreateScope();
 
         var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
-        using var transaction = context.Database.BeginTransaction();
 
         try
         {
@@ -29,6 +27,8 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
                 return;
 
             map.Pools.Add(pool);
+            
+            context.SaveChanges();
         }
         catch (Exception e)
         {
@@ -47,7 +47,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
             .Include(i => i.Pools)
             .Where(i => i.Pools.Count == 0)
             .ToArray()
-            .Select(i => new VotingMap(i.Guid, i.Hash, i.Difficulty, i.Category))
+            .Select(i => new VotingMap(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
             .ToList();
     }
     
@@ -64,10 +64,20 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         
         poolIds ??= [];
 
-        using var transaction = context.Database.BeginTransaction();
-
         try
         {
+            foreach (var poolId in poolIds)
+            {
+                if (context.Pools.Any(i => i.Id == poolId))
+                    continue;
+
+                context.Pools.Add(new Pool()
+                {
+                    Id = poolId,
+                    Maps = []
+                });
+            }
+            
             var pools = poolIds
                 .Select(i => context.Pools.FirstOrDefault(j => j.Id == i))
                 .Where(i => i != null);
@@ -84,7 +94,6 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
             });
 
             context.SaveChanges();
-            transaction.Commit();
         }
         catch (Exception ex)
         {

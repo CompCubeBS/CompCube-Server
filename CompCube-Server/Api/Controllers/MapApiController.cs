@@ -16,21 +16,6 @@ public class MapApiController(MapData mapData, BeatmapPoolData beatmapPoolData, 
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<string[]> GetAllMapHashes() => mapData.GetAllMapsFromActiveBatches().Select(i => i.Hash).ToArray();
 
-    [HttpGet("/api/maps/download/{hash}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult DownloadMap(string hash)
-    {
-        var filePath = Path.Combine(BeatmapsPath, $"{hash}.zip");
-
-        if (!System.IO.File.Exists(filePath))
-            return NotFound();
-        
-        var bytes = System.IO.File.ReadAllBytes(filePath);
-        
-        return File(bytes, "application/zip", $"{hash}.zip");
-    }
-
     [HttpGet("/api/maps/playlist")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<string> GetPlaylist()
@@ -65,12 +50,13 @@ public class MapApiController(MapData mapData, BeatmapPoolData beatmapPoolData, 
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> AddMap(string secret, 
+    public IActionResult AddMap(string secret, 
         string hash, 
         string difficulty, 
         string category,
         int maxScore,
-        int durationSeconds
+        int durationSeconds,
+        string poolIds
         )
     {
         if (secret != config.Secret)
@@ -82,9 +68,7 @@ public class MapApiController(MapData mapData, BeatmapPoolData beatmapPoolData, 
         if (!Enum.TryParse<VotingMap.Category>(category, out var categoryType))
             return BadRequest();
         
-        beatmapPoolData.AddMap(hash, difficultyType, categoryType, maxScore, durationSeconds);
-
-        await beatSaver.DownloadAllMissingBeatmaps();
+        beatmapPoolData.AddMap(hash, difficultyType, categoryType, maxScore, durationSeconds, poolIds.Split(",").Select(i => int.Parse(i)).ToArray());
 
         return Ok();
     }

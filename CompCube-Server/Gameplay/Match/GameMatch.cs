@@ -162,11 +162,11 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
             var redScore = client.IsRed ? score : _cachedScore;
             var blueScore = !client.IsRed ? score : _cachedScore;
         
-            var difference = Math.Abs(score.RelativeScore - _cachedScore.RelativeScore);
+            var difference = Math.Abs(((float) score.Points / _lastMapPick!.MaxScore) - ((float) _cachedScore.Points / _lastMapPick.MaxScore));
         
             var loser = redScore.Points > blueScore.Points ? _blue : _red;
         
-            loser.Damage(CurveDamageDifference(difference, _lastMapPick.MapCategory), GetMultiplierFromRound(_currentRound));
+            loser.Damage(CurveDamageDifference(difference, _lastMapPick!.MapCategory), GetMultiplierFromRound(_currentRound));
 
             if (loser.Health == 0)
             {
@@ -182,13 +182,17 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
             if (loser.Health == 0)
             {
                 var winner = loser.IsRed ? _blue : _red;
+                await DetermineWinner(winner, loser);
+                return;
+            }
+            
+            if (_red.AvailablePicks.Count == 0 && _blue.AvailablePicks.Count == 0)
+            {
+                var playerWithMostHealth = _red.Health >=  _blue.Health ? _red : _blue;
 
-                var eloChange = ComputeEloChange(winner.ConnectedClient.UserStatistics, loser.ConnectedClient.UserStatistics);
-                
-                ApplyEloChanges(winner, loser, eloChange);
+                var playerWithLeastHealth = GetOtherClient(playerWithMostHealth);
 
-                await winner.EndMatchForClient(eloChange, true);
-                await loser.EndMatchForClient(eloChange, false);
+                await DetermineWinner(playerWithMostHealth, playerWithLeastHealth);
                 return;
             }
 
@@ -198,6 +202,16 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
         {
             logger.LogError(e.ToString());
         }
+    }
+
+    private async Task DetermineWinner(ClientManager winner, ClientManager loser)
+    {
+        var eloChange = ComputeEloChange(winner.ConnectedClient.UserStatistics, loser.ConnectedClient.UserStatistics);
+                
+        ApplyEloChanges(winner, loser, eloChange);
+
+        await winner.EndMatchForClient(eloChange, true);
+        await loser.EndMatchForClient(eloChange, false);
     }
 
     private void ApplyEloChanges(ClientManager winner, ClientManager loser, int eloChange)
@@ -243,24 +257,27 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
         return round * 1.5f;
     }
 
-    private static float CurveDamageDifference(float relativePercent, VotingMap.Category category)
+    private static float CurveDamageDifference(float difference, VotingMap.Category category)
     {
         var curved = category switch
         {
-            VotingMap.Category.MidSpeed => 5.17319f * Math.Pow(relativePercent, .579536f),
-            VotingMap.Category.Accuracy => 48.34573f * Math.Pow(relativePercent, 1.10281f),
-            VotingMap.Category.Speed => 2.47073f * Math.Pow(relativePercent, .467712f),
-            VotingMap.Category.Extreme => 2.23623f * Math.Pow(relativePercent, .505025f),
-            VotingMap.Category.Tech => 2.35749f * Math.Pow(relativePercent, .492089f),
-            VotingMap.Category.Special => 2 * relativePercent,
-            _ => relativePercent
+            VotingMap.Category.MidSpeed => 5.17319f * Math.Pow(difference, .579536f),
+            VotingMap.Category.Accuracy => 48.34573f * Math.Pow(difference, 1.10281f),
+            VotingMap.Category.Speed => 2.47073f * Math.Pow(difference, .467712f),
+            VotingMap.Category.Extreme => 2.23623f * Math.Pow(difference, .505025f),
+            VotingMap.Category.Tech => 2.35749f * Math.Pow(difference, .492089f),
+            VotingMap.Category.Special => 2 * difference,
+            _ => difference
         };
 
-        return (float) Math.Clamp(0, curved, 1);
+        return (float) Math.Clamp(curved, 0, 1);
     }
 
     private int ComputeEloChange(UserStatistics winner, UserStatistics loser)
     {
+        if (!_matchSettings.Competitive)
+            return 0;
+        
         var p = (1.0 / (1.0 + Math.Pow(10, ((winner.Elo - loser.Elo) / 400.0))));
 
         return (int) (_matchSettings.KFactor * p);
@@ -374,6 +391,9 @@ public class ClientManager
     private void HandleClientSelectedMap(MapSelectionPacket packet, IConnectedClient client)
     {
         client.OnMapSelection -= HandleClientSelectedMap;
+        
+        if (!_availablePicks.Contains(packet.Selection))
+            throw new Exception($"Invalid data sent from client!");
 
         _availablePicks.Remove(packet.Selection);
         

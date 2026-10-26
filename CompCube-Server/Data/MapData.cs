@@ -18,7 +18,7 @@ public class MapData(IServiceScopeFactory scopeFactory, ConfigHelper helper)
 
         foreach (var pool in pools)
         {
-            maps = maps.Concat(pool.Maps.Select(i => new VotingMap(i.Guid, i.Hash, i.Difficulty, i.Category))).ToList();
+            maps = maps.Concat(pool.Maps.Select(i => new VotingMap(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))).ToList();
         }
 
         return maps;

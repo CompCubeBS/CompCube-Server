@@ -1,4 +1,5 @@
 ﻿using CompCube_Models.Models.ClientData;
+using CompCube_Models.Models.Map;
 using CompCube_Models.Models.Match;
 using CompCube_Models.Models.Packets;
 using CompCube_Models.Models.Packets.ServerPackets;
@@ -19,6 +20,8 @@ public class DummyConnectedClient(MapData mapData) : IConnectedClient
     public UserStatistics UserStatistics => _userInfo ?? throw new Exception("Debug client accessed before initialization!");
     
     private UserStatistics? _userInfo;
+    
+    private List<VotingMap> _picks = [];
 
     public void Init(UserStatistics userInfo)
     {
@@ -45,6 +48,7 @@ public class DummyConnectedClient(MapData mapData) : IConnectedClient
         switch (packet.PacketType)
         {
             case ServerPacket.ServerPacketTypes.MatchCreated:
+                _picks = ((MatchCreatedPacket)packet).InitialMaps.ToList();
                 OnUserDiscardedMaps?.Invoke(new DiscardMapsPacket([]), this);
                 break;
             case ServerPacket.ServerPacketTypes.PlayerSelectedMap:
@@ -57,7 +61,11 @@ public class DummyConnectedClient(MapData mapData) : IConnectedClient
                 if (pickPhasePacket!.IsOwnPick)
                 {
                     await Task.Delay(15000);
-                    OnMapSelection?.Invoke(new MapSelectionPacket(mapData.GetAllMapsFromActiveBatches().First()), this);
+
+                    var map = _picks.First();
+                    
+                    _picks.Remove(map);
+                    OnMapSelection?.Invoke(new MapSelectionPacket(map), this);
                     await Task.Delay(5000);
                     OnScoreSubmission?.Invoke(new ScoreSubmissionPacket(Score.Empty), this);
                 }
