@@ -161,12 +161,14 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
         
             var redScore = client.IsRed ? score : _cachedScore;
             var blueScore = !client.IsRed ? score : _cachedScore;
-        
-            var difference = Math.Abs(((float) score.Points / _lastMapPick!.MaxScore) - ((float) _cachedScore.Points / _lastMapPick.MaxScore));
+
+            var difference = (float) Math.Abs(score.Points - _cachedScore.Points) / _lastMapPick!.MaxScore;// Math.Abs(((float) score.Points / _lastMapPick!.MaxScore) - ((float) _cachedScore.Points / _lastMapPick.MaxScore));
         
             var loser = redScore.Points > blueScore.Points ? _blue : _red;
+
+            var damageAmount = CurveDamageDifference(difference, _lastMapPick!.MapCategory);
         
-            loser.Damage(CurveDamageDifference(difference, _lastMapPick!.MapCategory), GetMultiplierFromRound(_currentRound));
+            loser.Damage(damageAmount, GetMultiplierFromRound(_currentRound));
 
             if (loser.Health == 0)
             {
@@ -174,8 +176,8 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
                 _blue.ClientDidDisconnect -= HandleClientDisconnected;
             }
 
-            await _red.SendRoundResults(redScore, blueScore, _red.Health, _blue.Health);
-            await _blue.SendRoundResults(redScore, blueScore, _red.Health, _blue.Health);
+            await _red.SendRoundResults(redScore, blueScore, _red.Health, _blue.Health, damageAmount);
+            await _blue.SendRoundResults(redScore, blueScore, _red.Health, _blue.Health, damageAmount);
 
             await Task.Delay(500);
 
@@ -339,9 +341,9 @@ public class ClientManager
         await ConnectedClient.SendPacket(new MatchCreatedPacket(red, blue, AvailablePicks.ToArray()));
     }
 
-    public async Task SendRoundResults(Score red, Score blue, float redHealth, float blueHealth)
+    public async Task SendRoundResults(Score red, Score blue, float redHealth, float blueHealth, float damageAmount)
     {
-        await ConnectedClient.SendPacket(new RoundResultsPacket(red, blue, redHealth, blueHealth));
+        await ConnectedClient.SendPacket(new RoundResultsPacket(red, blue, redHealth, blueHealth, damageAmount));
     }
 
     private async void HandleUserFinishedDiscarding(DiscardMapsPacket packet, IConnectedClient client)

@@ -44,6 +44,8 @@ public class DummyConnectedClient(MapData mapData) : IConnectedClient
         }
         
         await Task.Delay(5000);
+
+        var score = new Score(10000, .10f, true, 0, true);
         
         switch (packet.PacketType)
         {
@@ -52,7 +54,7 @@ public class DummyConnectedClient(MapData mapData) : IConnectedClient
                 OnUserDiscardedMaps?.Invoke(new DiscardMapsPacket([]), this);
                 break;
             case ServerPacket.ServerPacketTypes.PlayerSelectedMap:
-                OnScoreSubmission?.Invoke(new ScoreSubmissionPacket(Score.Empty), this);
+                OnScoreSubmission?.Invoke(new ScoreSubmissionPacket(score), this);
                 // await Task.Delay(3500);
                 // Disconnect();
                 break;
@@ -67,7 +69,7 @@ public class DummyConnectedClient(MapData mapData) : IConnectedClient
                     _picks.Remove(map);
                     OnMapSelection?.Invoke(new MapSelectionPacket(map), this);
                     await Task.Delay(5000);
-                    OnScoreSubmission?.Invoke(new ScoreSubmissionPacket(Score.Empty), this);
+                    OnScoreSubmission?.Invoke(new ScoreSubmissionPacket(score), this);
                 }
                 break;
         }
