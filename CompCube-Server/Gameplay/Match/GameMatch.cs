@@ -247,8 +247,12 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
     {
         var curved = category switch
         {
-            VotingMap.Category.Extreme => 1.8868f * Math.Pow(relativePercent, .4587f),
-            VotingMap.Category.Accuracy => 2.1513f * Math.Pow(relativePercent, 0.352641f),
+            VotingMap.Category.MidSpeed => 5.17319f * Math.Pow(relativePercent, .579536f),
+            VotingMap.Category.Accuracy => 48.34573f * Math.Pow(relativePercent, 1.10281f),
+            VotingMap.Category.Speed => 2.47073f * Math.Pow(relativePercent, .467712f),
+            VotingMap.Category.Extreme => 2.23623f * Math.Pow(relativePercent, .505025f),
+            VotingMap.Category.Tech => 2.35749f * Math.Pow(relativePercent, .492089f),
+            VotingMap.Category.Special => 2 * relativePercent,
             _ => relativePercent
         };
 
