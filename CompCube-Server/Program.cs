@@ -27,10 +27,7 @@ public class Program
     
     public static void Main(string[] args)
     {
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions()
-        {   
-            ContentRootPath = AppDomain.CurrentDomain.BaseDirectory,
-        });
+        var builder = WebApplication.CreateBuilder();
 
         _useDiscordIntegration = builder.Configuration.GetSection("Discord").GetValue<bool>("UseDiscordIntegration");
         
@@ -53,8 +50,6 @@ public class Program
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
-        
-        Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "Beatmaps"));
 
         var webSocketPort = builder.Configuration.GetSection("Gameplay").GetValue("WebsocketListeningPort", -1);
 
