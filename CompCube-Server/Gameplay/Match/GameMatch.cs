@@ -162,7 +162,7 @@ public class GameMatch(MapData mapData, ILogger<GameMatch> logger, TimeoutManage
             var redScore = client.IsRed ? score : _cachedScore;
             var blueScore = !client.IsRed ? score : _cachedScore;
 
-            var difference = (float) Math.Abs(score.Points - _cachedScore.Points) / _lastMapPick!.MaxScore;// Math.Abs(((float) score.Points / _lastMapPick!.MaxScore) - ((float) _cachedScore.Points / _lastMapPick.MaxScore));
+            var difference = Math.Abs(((float) score.Points / _lastMapPick!.MaxScore) - ((float) _cachedScore.Points / _lastMapPick.MaxScore));
         
             var loser = redScore.Points > blueScore.Points ? _blue : _red;
 
