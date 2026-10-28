@@ -57,6 +57,11 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
     {
         try
         {
+            _playerDisconnectionCts.Token.ThrowIfCancellationRequested();
+            
+            _red.ClientDidDisconnect += HandleClientDisconnected;
+            _blue.ClientDidDisconnect += HandleClientDisconnected;
+            
             // discard phase
             await Task.WhenAll(
                 _red.StartAndWaitForDiscardPhaseToComplete(_blue.UserStatistics),
@@ -91,6 +96,29 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
         catch (ObjectDisposedException)
         {
             
+        }
+    }
+
+    private async void HandleClientDisconnected(MatchPlayer loser)
+    {
+        try
+        {
+            loser.ClientDidDisconnect -= HandleClientDisconnected;
+            GetOther(loser).ClientDidDisconnect -= HandleClientDisconnected;
+
+            await _playerDisconnectionCts.CancelAsync();
+
+            logger.LogInformation("Match forfeit: Player {player} disconnected early!", loser.UserStatistics.Username);
+
+            var winner = GetOther(loser);
+
+            ApplyEloChanges(winner, loser, ComputeEloChange(winner.UserStatistics, loser.UserStatistics));
+
+            await winner.DisconnectAbruptly("Player Forfeit");
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Unhandled exception during client disconnect!");
         }
     }
     
@@ -131,9 +159,11 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
 
         var timeToContinue = DateTime.UtcNow.AddSeconds(10);
 
+        var damage = CurveDamageDifference(redScore, blueScore, map!);
+
         var replayRequestResults = await Task.WhenAll(
-            _red.SendRoundResults(redScore, blueScore),
-            _blue.SendRoundResults(redScore, blueScore)
+            _red.SendRoundResults(redScore, blueScore, damage),
+            _blue.SendRoundResults(redScore, blueScore, damage)
         );
         
         await Task.Delay(Math.Max(0, (int)(timeToContinue - DateTime.UtcNow).TotalMilliseconds));
@@ -153,10 +183,12 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
             
             if (newBlueScore.Points > blueScore.Points)
                 blueScore = newBlueScore;
+
+            damage = CurveDamageDifference(redScore, blueScore, map!);
             
             await Task.WhenAll(
-                _red.SendRoundResults(redScore, blueScore),
-                _blue.SendRoundResults(blueScore, blueScore)
+                _red.SendRoundResults(redScore, blueScore, damage),
+                _blue.SendRoundResults(blueScore, blueScore, damage)
             );
             
             await Task.Delay(new TimeSpan(0, 0, 10));
@@ -167,14 +199,14 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
         if (blueScore.Points < redScore.Points)
             loser = _blue;
         
-        var difference = Math.Abs(((float) redScore.Points / map!.MaxScore) - ((float) blueScore.Points / map.MaxScore));
-        
-        loser.Damage(CurveDamageDifference(difference, map!.MapCategory), Multiplier);
+        loser.Damage(CurveDamageDifference(redScore, blueScore, map!), Multiplier);
     }
     
-    private static float CurveDamageDifference(float difference, VotingMap.Category category)
+    private static float CurveDamageDifference(Score redScore, Score blueScore, VotingMap map)
     {
-        var curved = category switch
+        var difference = Math.Abs(((float) redScore.Points / map!.MaxScore) - ((float) blueScore.Points / map.MaxScore));
+        
+        var curved = map.MapCategory switch
         {
             VotingMap.Category.MidSpeed => 5.17319f * Math.Pow(difference, .579536f),
             VotingMap.Category.Accuracy => 48.34573f * Math.Pow(difference, 1.10281f),

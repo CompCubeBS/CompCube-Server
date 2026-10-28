@@ -24,16 +24,15 @@ public class MatchPlayer
     private readonly IConnectedClient _client;
     private readonly IDealer _dealer;
     private readonly bool _isRed;
-    
-    private readonly CancellationTokenSource _cts;
 
-    public MatchPlayer(IConnectedClient client, IDealer dealer, bool isRed, CancellationTokenSource cts)
+    public event Action<MatchPlayer>? ClientDidDisconnect;
+
+    public MatchPlayer(IConnectedClient client, IDealer dealer, bool isRed)
     {
         _client = client;
         _dealer = dealer;
         _isRed = isRed;
         _availablePicks = dealer.PullNewCards(5);
-        _cts = cts;
         
         _client.OnDisconnected += HandleDisconnect;
     }
@@ -42,7 +41,7 @@ public class MatchPlayer
     {
         client.OnDisconnected -= HandleDisconnect;
         
-        _cts.Cancel();
+        ClientDidDisconnect?.Invoke(this);
     }
 
     public async Task StartAndWaitForDiscardPhaseToComplete(UserStatistics opponent)
@@ -100,13 +99,13 @@ public class MatchPlayer
         }
     }
 
-    public async Task<Tuple<MatchPlayer, Score>> PlayMap(VotingMap map, bool isReplay = false)
+    public async Task<Tuple<MatchPlayer, Score>> PlayMap(VotingMap map, UserStatistics? opponentWhoRequestedReplayIfApplies = null)
     {
         var tcs = new TaskCompletionSource<Score>();
         
         _client.OnScoreSubmission += HandleScoreSubmission;
 
-        await _client.SendPacket(isReplay ? new PlayerDidRequestReplayPacket(map) : new PlayerSelectedMapPacket(map));
+        await _client.SendPacket(opponentWhoRequestedReplayIfApplies != null ? new PlayerDidRequestReplayPacket(map, opponentWhoRequestedReplayIfApplies) : new PlayerSelectedMapPacket(map));
         
         return new Tuple<MatchPlayer, Score>(this, await tcs.Task);
 
@@ -118,7 +117,7 @@ public class MatchPlayer
         }
     }
 
-    public async Task<Tuple<MatchPlayer, bool>> SendRoundResults(Score red, Score blue)
+    public async Task<Tuple<MatchPlayer, bool>> SendRoundResults(Score red, Score blue, float damageAmount)
     {
         if ((red.Points > blue.Points && IsRed) || (blue.Points > red.Points && !IsRed))
             return new Tuple<MatchPlayer, bool>(this, false);
@@ -127,7 +126,7 @@ public class MatchPlayer
         
         _client.OnReplayRequest += HandleReplayRequest;
         
-        await _client.SendPacket(new RoundResultsPacket(red, blue));
+        await _client.SendPacket(new RoundResultsPacket(red, blue, damageAmount));
 
         return new Tuple<MatchPlayer, bool>(this, await tcs.Task);
 
@@ -141,9 +140,9 @@ public class MatchPlayer
         }
     }
 
-    public async Task<Tuple<MatchPlayer, Score>> ReplayMap(VotingMap map)
+    public async Task<Tuple<MatchPlayer, Score>> ReplayMap(VotingMap map, UserStatistics? opponentWhoRequestedReplayIfApplies = null)
     {
-        return await PlayMap(map, true);
+        return await PlayMap(map, opponentWhoRequestedReplayIfApplies);
     }
 
     public async Task SendMatchResults(int eloChange, bool won)
@@ -155,4 +154,6 @@ public class MatchPlayer
     {
         Health = Math.Max(0, Health - (amount * multiplier));
     }
+
+    public async Task DisconnectAbruptly(string reason) => await _client.DisconnectAbruptlyAsync(reason);
 }
