@@ -361,8 +361,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         if (user == null)
             return null;
         
-        Console.WriteLine("here");
-        
         var stats = user.CompetetiveStatistics.FirstOrDefault(i => i.Season == season);
 
         if (stats == null)
