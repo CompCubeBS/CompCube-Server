@@ -8,19 +8,42 @@ using CompCube_Server.Models.CompCube_Models.Models.Packets.UserPackets;
 
 namespace CompCube_Server.Gameplay.Match;
 
-public class MatchPlayer(IConnectedClient client, IDealer dealer, bool isRed)
+public class MatchPlayer
 {
-    public UserStatistics UserStatistics => client.UserStatistics;
+    public UserStatistics UserStatistics => _client.UserStatistics;
 
     public float Health { get; private set; } = 1f;
 
     public int RemainingReplays { get; private set; } = 1;
     
-    public bool IsRed => isRed;
+    public bool IsRed => _isRed;
 
     public IReadOnlyList<VotingMap> AvailablePicks => _availablePicks;
 
-    private VotingMap[] _availablePicks = dealer.PullNewCards(5);
+    private VotingMap[] _availablePicks;
+    private readonly IConnectedClient _client;
+    private readonly IDealer _dealer;
+    private readonly bool _isRed;
+    
+    private readonly CancellationTokenSource _cts;
+
+    public MatchPlayer(IConnectedClient client, IDealer dealer, bool isRed, CancellationTokenSource cts)
+    {
+        _client = client;
+        _dealer = dealer;
+        _isRed = isRed;
+        _availablePicks = dealer.PullNewCards(5);
+        _cts = cts;
+        
+        _client.OnDisconnected += HandleDisconnect;
+    }
+
+    private void HandleDisconnect(IConnectedClient client)
+    {
+        client.OnDisconnected -= HandleDisconnect;
+        
+        _cts.Cancel();
+    }
 
     public async Task StartAndWaitForDiscardPhaseToComplete(UserStatistics opponent)
     {
@@ -29,20 +52,20 @@ public class MatchPlayer(IConnectedClient client, IDealer dealer, bool isRed)
         
         var tcs = new TaskCompletionSource();
 
-        client.OnUserDiscardedMaps += HandleClientDidSubmitDiscards;
+        _client.OnUserDiscardedMaps += HandleClientDidSubmitDiscards;
         
-        await client.SendPacket(new MatchCreatedPacket(red, blue, AvailablePicks.ToArray()));
+        await _client.SendPacket(new MatchCreatedPacket(red, blue, AvailablePicks.ToArray()));
         
         await tcs.Task;
         
-        await client.SendPacket(new UpdateCardsPacket(_availablePicks));
+        await _client.SendPacket(new UpdateCardsPacket(_availablePicks));
         return;
 
         void HandleClientDidSubmitDiscards(DiscardMapsPacket packet, IConnectedClient connectedClient)
         {
             connectedClient.OnUserDiscardedMaps -= HandleClientDidSubmitDiscards;
 
-            _availablePicks = dealer.CompleteDeck(_availablePicks.Where(i => !packet.Maps.Contains(i)).ToArray(), 5);
+            _availablePicks = _dealer.CompleteDeck(_availablePicks.Where(i => !packet.Maps.Contains(i)).ToArray(), 5);
             
             tcs.SetResult();
         }
@@ -52,15 +75,15 @@ public class MatchPlayer(IConnectedClient client, IDealer dealer, bool isRed)
     {
         if (!isPicking)
         {
-            await client.SendPacket(new StartPickPhasePacket(_availablePicks, false, multiplier, redHealth, blueHealth));
+            await _client.SendPacket(new StartPickPhasePacket(_availablePicks, false, multiplier, redHealth, blueHealth));
             return null;
         }
         
         var tcs = new TaskCompletionSource<VotingMap>();
         
-        client.OnMapSelection += HandleClientSelectedMap;
+        _client.OnMapSelection += HandleClientSelectedMap;
         
-        await client.SendPacket(new StartPickPhasePacket(_availablePicks, true, multiplier, redHealth, blueHealth));
+        await _client.SendPacket(new StartPickPhasePacket(_availablePicks, true, multiplier, redHealth, blueHealth));
         
         return await tcs.Task;
 
@@ -81,15 +104,15 @@ public class MatchPlayer(IConnectedClient client, IDealer dealer, bool isRed)
     {
         var tcs = new TaskCompletionSource<Score>();
         
-        client.OnScoreSubmission += HandleScoreSubmission;
+        _client.OnScoreSubmission += HandleScoreSubmission;
 
-        await client.SendPacket(isReplay ? new PlayerDidRequestReplayPacket(map) : new PlayerSelectedMapPacket(map));
+        await _client.SendPacket(isReplay ? new PlayerDidRequestReplayPacket(map) : new PlayerSelectedMapPacket(map));
         
         return new Tuple<MatchPlayer, Score>(this, await tcs.Task);
 
         void HandleScoreSubmission(ScoreSubmissionPacket submission, IConnectedClient connectedClient)
         {
-            client.OnScoreSubmission -= HandleScoreSubmission;
+            _client.OnScoreSubmission -= HandleScoreSubmission;
             
             tcs.SetResult(submission.Score);
         }
@@ -102,9 +125,9 @@ public class MatchPlayer(IConnectedClient client, IDealer dealer, bool isRed)
         
         var tcs = new TaskCompletionSource<bool>();
         
-        client.OnReplayRequest += HandleReplayRequest;
+        _client.OnReplayRequest += HandleReplayRequest;
         
-        await client.SendPacket(new RoundResultsPacket(red, blue));
+        await _client.SendPacket(new RoundResultsPacket(red, blue));
 
         return new Tuple<MatchPlayer, bool>(this, await tcs.Task);
 
@@ -125,7 +148,7 @@ public class MatchPlayer(IConnectedClient client, IDealer dealer, bool isRed)
 
     public async Task SendMatchResults(int eloChange, bool won)
     {
-        await client.SendPacket(new MatchFinishedPacket(eloChange, won));
+        await _client.SendPacket(new MatchFinishedPacket(eloChange, won));
     }
 
     public void Damage(float amount, float multiplier)

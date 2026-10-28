@@ -11,7 +11,7 @@ using CompCube_Server.Models.CompCube_Models.Models.Packets.UserPackets;
 
 namespace CompCube_Server.Gameplay.Match;
 
-public class GameMatch(ILogger<GameMatch> logger, MapData mapData)
+public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData userData)
 {
     private MatchSettings _matchSettings;
     
@@ -19,6 +19,8 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData)
     private MatchPlayer _blue;
 
     private int _roundCount = 0;
+    
+    private CancellationTokenSource _playerDisconnectionCts = new();
 
     public float Multiplier
     {
@@ -53,36 +55,55 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData)
 
     public async Task StartMatchAsync()
     {
-        // discard phase
-        await Task.WhenAll(
-            _red.StartAndWaitForDiscardPhaseToComplete(_blue.UserStatistics),
-            _blue.StartAndWaitForDiscardPhaseToComplete(_red.UserStatistics)
-        );
-
-        while (true)
+        try
         {
-            await StartRound();
-
-            if (_red.AvailablePicks.Count <= 0 && _blue.AvailablePicks.Count <= 0)
-                break;
-
-            if (_red.Health <= 0 || _blue.Health <= 0)
-                break;
-        }
-        
-        var winner = _red;
-
-        if (_blue.Health > _red.Health)
-            winner = _blue;
-        
-        var loser = GetOther(winner);
-
-        var eloChange = ComputeEloChange(winner.UserStatistics, loser.UserStatistics);
-
-        await Task.WhenAll(
-            winner.SendMatchResults(eloChange, true),
-            loser.SendMatchResults(eloChange, false)
+            // discard phase
+            await Task.WhenAll(
+                _red.StartAndWaitForDiscardPhaseToComplete(_blue.UserStatistics),
+                _blue.StartAndWaitForDiscardPhaseToComplete(_red.UserStatistics)
             );
+
+            while (true)
+            {
+                await StartRound();
+
+                if (_red.AvailablePicks.Count <= 0 && _blue.AvailablePicks.Count <= 0)
+                    break;
+
+                if (_red.Health <= 0 || _blue.Health <= 0)
+                    break;
+            }
+
+            var winner = _red;
+
+            if (_blue.Health > _red.Health)
+                winner = _blue;
+
+            var loser = GetOther(winner);
+
+            var eloChange = ComputeEloChange(winner.UserStatistics, loser.UserStatistics);
+
+            await Task.WhenAll(
+                winner.SendMatchResults(eloChange, true),
+                loser.SendMatchResults(eloChange, false)
+            );
+        }
+        catch (ObjectDisposedException)
+        {
+            
+        }
+    }
+    
+    private void ApplyEloChanges(MatchPlayer winner, MatchPlayer loser, int eloChange)
+    {
+        userData.AdjustElo(winner.UserStatistics.PlatformId, eloChange);
+        userData.AdjustElo(loser.UserStatistics.PlatformId, -eloChange);
+        
+        userData.IncrementTotalGames(winner.UserStatistics.PlatformId);
+        userData.IncrementTotalGames(loser.UserStatistics.PlatformId);
+        
+        userData.IncrementWins(winner.UserStatistics.PlatformId);
+        userData.ResetWinstreak(winner.UserStatistics.PlatformId);
     }
 
     private async Task StartRound()
