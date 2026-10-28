@@ -6,6 +6,7 @@ using CompCube_Models.Models.Packets.ServerPackets;
 using CompCube_Models.Models.Packets.UserPackets;
 using CompCube_Server.Data;
 using CompCube_Server.Interfaces;
+using CompCube_Server.Models.CompCube_Models.Models.Packets.UserPackets;
 
 namespace CompCube_Server.Networking.Client;
 
@@ -15,6 +16,7 @@ public class DummyConnectedClient(MapData mapData) : IConnectedClient
     public event Action<MapSelectionPacket, IConnectedClient>? OnMapSelection;
     public event Action<ScoreSubmissionPacket, IConnectedClient>? OnScoreSubmission;
     public event Action<IConnectedClient>? OnDisconnected;
+    public event Action<ReplayRequestPacket, IConnectedClient>? OnReplayRequest;
 
     public bool IsConnectionAlive => true;
     public UserStatistics UserStatistics => _userInfo ?? throw new Exception("Debug client accessed before initialization!");

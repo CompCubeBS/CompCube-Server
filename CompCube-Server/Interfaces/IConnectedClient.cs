@@ -2,6 +2,7 @@
 using CompCube_Models.Models.ClientData;
 using CompCube_Models.Models.Packets;
 using CompCube_Models.Models.Packets.UserPackets;
+using CompCube_Server.Models.CompCube_Models.Models.Packets.UserPackets;
 
 namespace CompCube_Server.Interfaces;
 
@@ -12,6 +13,8 @@ public interface IConnectedClient
     public event Action<ScoreSubmissionPacket, IConnectedClient>? OnScoreSubmission;
     
     public event Action<IConnectedClient>? OnDisconnected;
+    
+    public event Action<ReplayRequestPacket, IConnectedClient>? OnReplayRequest;
 
     public bool IsConnectionAlive { get; }
 

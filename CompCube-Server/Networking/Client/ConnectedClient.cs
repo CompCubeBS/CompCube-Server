@@ -6,6 +6,7 @@ using CompCube_Models.Models.Packets;
 using CompCube_Models.Models.Packets.ServerPackets;
 using CompCube_Models.Models.Packets.UserPackets;
 using CompCube_Server.Interfaces;
+using CompCube_Server.Models.CompCube_Models.Models.Packets.UserPackets;
 
 namespace CompCube_Server.Networking.Client;
 
@@ -18,6 +19,8 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
     public event Action<MapSelectionPacket, IConnectedClient>? OnMapSelection;
     public event Action<ScoreSubmissionPacket, IConnectedClient>? OnScoreSubmission;
     public event Action<IConnectedClient>? OnDisconnected;
+    
+    public event Action<ReplayRequestPacket, IConnectedClient>? OnReplayRequest;
 
     private UserStatistics? _userStatistics;
 
