@@ -48,11 +48,11 @@ public class MatchPlayer(IConnectedClient client, IDealer dealer, bool isRed)
         }
     }
 
-    public async Task<VotingMap?> StartPickPhaseForClient(bool isPicking, float multiplier)
+    public async Task<VotingMap?> StartPickPhaseForClient(bool isPicking, float multiplier, float redHealth, float blueHealth)
     {
         if (!isPicking)
         {
-            await client.SendPacket(new StartPickPhasePacket(_availablePicks, false, multiplier));
+            await client.SendPacket(new StartPickPhasePacket(_availablePicks, false, multiplier, redHealth, blueHealth));
             return null;
         }
         
@@ -60,7 +60,7 @@ public class MatchPlayer(IConnectedClient client, IDealer dealer, bool isRed)
         
         client.OnMapSelection += HandleClientSelectedMap;
         
-        await client.SendPacket(new StartPickPhasePacket(_availablePicks, true, multiplier));
+        await client.SendPacket(new StartPickPhasePacket(_availablePicks, true, multiplier, redHealth, blueHealth));
         
         return await tcs.Task;
 

@@ -94,8 +94,8 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData)
         var other = GetOther(pickingClient);
         
         var pickReturns = await Task.WhenAll(
-            pickingClient.StartPickPhaseForClient(true, Multiplier),
-            other.StartPickPhaseForClient(false, Multiplier)
+            pickingClient.StartPickPhaseForClient(true, Multiplier, _red.Health, _blue.Health),
+            other.StartPickPhaseForClient(false, Multiplier, _red.Health, _blue.Health)
         );
 
         var map = pickReturns.First(i => i is not null);
