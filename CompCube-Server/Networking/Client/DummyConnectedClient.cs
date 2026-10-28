@@ -64,7 +64,7 @@ public class DummyConnectedClient(MapData mapData) : IConnectedClient
                 var pickPhasePacket = packet as StartPickPhasePacket;
                 if (pickPhasePacket!.IsOwnPick)
                 {
-                    await Task.Delay(15000);
+                    await Task.Delay(3000);
 
                     var map = _picks.First();
                     

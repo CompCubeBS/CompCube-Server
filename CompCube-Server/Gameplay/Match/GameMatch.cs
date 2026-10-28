@@ -84,6 +84,8 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
             var loser = GetOther(winner);
 
             var eloChange = ComputeEloChange(winner.UserStatistics, loser.UserStatistics);
+            
+            await Task.Delay(500);
 
             await Task.WhenAll(
                 winner.SendMatchResults(eloChange, true),

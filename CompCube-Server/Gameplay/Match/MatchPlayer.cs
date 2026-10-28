@@ -143,8 +143,11 @@ public class MatchPlayer : IDisposable
         _client.OnReplayRequest += _handleReplayRequestWrapper;
         
         await _client.SendPacket(new RoundResultsPacket(red, blue, damageAmount));
+        
+        // await await
+        var result = await await Task.WhenAny(tcs.Task, WaitForTimeAndReturnDoNotWantToReplay());
 
-        return new Tuple<MatchPlayer, bool>(this, await tcs.Task);
+        return new Tuple<MatchPlayer, bool>(this, result);
         
         void HandleReplayRequest(ReplayRequestPacket packet, IConnectedClient connectedClient)
         {
@@ -153,6 +156,13 @@ public class MatchPlayer : IDisposable
             var sanitized = packet.WantsToReplay && RemainingReplays > 0;
             
             tcs.SetResult(sanitized);
+        }
+
+        async Task<bool> WaitForTimeAndReturnDoNotWantToReplay()
+        {
+            await Task.Delay(10000);
+
+            return false;
         }
     }
 
