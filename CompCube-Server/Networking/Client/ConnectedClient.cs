@@ -10,7 +10,7 @@ using CompCube_Server.Models.CompCube_Models.Models.Packets.UserPackets;
 
 namespace CompCube_Server.Networking.Client;
 
-public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient, IAsyncDisposable
+public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
 {
     private WebSocket _client;
     private TaskCompletionSource _socketFinishedTcs;
@@ -46,6 +46,8 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
             while (true)
             {
                 var buffer = new byte[4096];
+                
+                _cancellationTokenSource.Token.ThrowIfCancellationRequested();
 
                 var result = await _client.ReceiveAsync(new ArraySegment<byte>(buffer), _cancellationTokenSource.Token);
                 Array.Resize(ref buffer, result.Count);
@@ -73,12 +75,12 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
         }
         catch (OperationCanceledException)
         {
-
         }
         catch (WebSocketException)
         {
-            
         }
+        catch (ObjectDisposedException)
+        {}
         catch (Exception e)
         {
             logger.LogError(e.ToString());
@@ -92,7 +94,7 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
         _isDisconnected = true;
         
         OnDisconnected?.Invoke(this);
-        
+
         try
         {
             await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", _cancellationTokenSource.Token);
@@ -101,6 +103,9 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
         {
         }
         catch (WebSocketException)
+        {
+        }
+        catch (ObjectDisposedException)
         {
         }
         catch (Exception e)
@@ -138,6 +143,9 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
             case UserPacket.UserPacketTypes.ClientDisconnectPacket:
                 await Disconnect();
                 break;
+            case UserPacket.UserPacketTypes.ReplayRequest:
+                OnReplayRequest?.Invoke(packet as ReplayRequestPacket ?? throw new InvalidOperationException(), this);
+                break;
             default:
                 await Disconnect();
                 throw new Exception("Unknown packet type!");
@@ -164,8 +172,9 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
-        await Disconnect();
+        _client.Dispose();
+        _cancellationTokenSource.Dispose();
     }
 }

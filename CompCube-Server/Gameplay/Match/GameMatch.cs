@@ -11,7 +11,7 @@ using CompCube_Server.Models.CompCube_Models.Models.Packets.UserPackets;
 
 namespace CompCube_Server.Gameplay.Match;
 
-public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData userData)
+public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData userData) : IDisposable
 {
     private MatchSettings _matchSettings;
     
@@ -57,12 +57,9 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
     {
         try
         {
-            _playerDisconnectionCts.Token.ThrowIfCancellationRequested();
-            
             _red.ClientDidDisconnect += HandleClientDisconnected;
             _blue.ClientDidDisconnect += HandleClientDisconnected;
             
-            // discard phase
             await Task.WhenAll(
                 _red.StartAndWaitForDiscardPhaseToComplete(_blue.UserStatistics),
                 _blue.StartAndWaitForDiscardPhaseToComplete(_red.UserStatistics)
@@ -92,10 +89,12 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
                 winner.SendMatchResults(eloChange, true),
                 loser.SendMatchResults(eloChange, false)
             );
-        }
-        catch (ObjectDisposedException)
-        {
             
+            Dispose();
+        }
+        catch (OperationCanceledException)
+        {
+            Dispose();
         }
     }
 
@@ -115,6 +114,8 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
             ApplyEloChanges(winner, loser, ComputeEloChange(winner.UserStatistics, loser.UserStatistics));
 
             await winner.DisconnectAbruptly("Player Forfeit");
+            
+            Dispose();
         }
         catch (Exception e)
         {
@@ -124,6 +125,9 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
     
     private void ApplyEloChanges(MatchPlayer winner, MatchPlayer loser, int eloChange)
     {
+        if (!_matchSettings.Competitive)
+            return;
+        
         userData.AdjustElo(winner.UserStatistics.PlatformId, eloChange);
         userData.AdjustElo(loser.UserStatistics.PlatformId, -eloChange);
         
@@ -170,9 +174,11 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
 
         if (replayRequestResults.Any(i => i.Item2))
         {
+            var replayRequester = replayRequestResults.First(i => i.Item2).Item1.UserStatistics;
+            
             var newScores = await Task.WhenAll(
-                _red.ReplayMap(map!),
-                _blue.ReplayMap(map!)
+                _red.ReplayMap(map!, replayRequester),
+                _blue.ReplayMap(map!, replayRequester)
                 );
 
             var newRedScore = newScores.First(i => i.Item1.IsRed).Item2;
@@ -231,4 +237,12 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
     }
     
     private MatchPlayer GetOther(MatchPlayer player) => player.IsRed ? _blue : _red;
+
+    public void Dispose()
+    {
+        _playerDisconnectionCts.Dispose();
+        
+        _red.Dispose();
+        _blue.Dispose();
+    }
 }

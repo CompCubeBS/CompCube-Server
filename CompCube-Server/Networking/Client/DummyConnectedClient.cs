@@ -88,4 +88,9 @@ public class DummyConnectedClient(MapData mapData) : IConnectedClient
         Disconnect();
         return Task.CompletedTask;
     }
+
+    public void Dispose()
+    {
+        // TODO release managed resources here
+    }
 }

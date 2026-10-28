@@ -6,7 +6,7 @@ using CompCube_Server.Models.CompCube_Models.Models.Packets.UserPackets;
 
 namespace CompCube_Server.Interfaces;
 
-public interface IConnectedClient
+public interface IConnectedClient : IDisposable
 {
     public event Action<DiscardMapsPacket, IConnectedClient>? OnUserDiscardedMaps;
     public event Action<MapSelectionPacket, IConnectedClient>? OnMapSelection;
