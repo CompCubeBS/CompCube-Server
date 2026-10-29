@@ -92,37 +92,39 @@ public class ForumChecker
             await AcceptMap(thread, voteState);
     }
 
-    public async Task AcceptMap(GuildThread forumThread, MapThreadUpvotes voteState)
+    public async Task AcceptMap(GuildThread forumThread, MapThreadUpvotes voteState, bool silent = false)
     {
         await _mapLog.LogQueuedBeatmap(forumThread);
         
-        await forumThread.SendMessageAsync(new MessageProperties()
-        {
-            Embeds = [
-                new EmbedProperties()
-                {
-                    Description = $"✅ This map has been accepted with {voteState.Upvotes.Count} upvotes and {voteState.Downvotes.Count} downvotes."
-                }
-            ]
-        });
+        if (!silent)
+            await forumThread.SendMessageAsync(new MessageProperties()
+            {
+                Embeds = [
+                    new EmbedProperties()
+                    {
+                        Description = $"✅ This map has been accepted with {voteState.Upvotes.Count} upvotes and {voteState.Downvotes.Count} downvotes."
+                    }
+                ]
+            });
 
         await forumThread.ModifyAsync(options =>
             options.WithName($"[✅] {forumThread.Name}").WithArchived().WithLocked()); // .WithAppliedTags([acceptedTag.Id]));
     }
 
-    public async Task DenyMap(GuildThread forumThread, MapThreadUpvotes voteState)
+    public async Task DenyMap(GuildThread forumThread, MapThreadUpvotes voteState, bool silent = false)
     {
         await _mapLog.LogDeniedBeatmap(forumThread, false);
 
-        await forumThread.SendMessageAsync(new MessageProperties()
-        {
-            Embeds = [
-                new EmbedProperties()
-                {
-                    Description = $"❌ This map has been denied with {voteState.Upvotes.Count} upvotes and {voteState.Downvotes.Count} downvotes."
-                }
-            ]
-        });
+        if (!silent)
+            await forumThread.SendMessageAsync(new MessageProperties()
+            {
+                Embeds = [
+                    new EmbedProperties()
+                    {
+                        Description = $"❌ This map has been denied with {voteState.Upvotes.Count} upvotes and {voteState.Downvotes.Count} downvotes."
+                    }
+                ]
+            });
         
         await forumThread.ModifyAsync(options => options.WithName($"[❌] {forumThread.Name}").WithArchived().WithLocked()); // .WithLocked().WithAppliedTags([acceptedTag.Id]));
     }

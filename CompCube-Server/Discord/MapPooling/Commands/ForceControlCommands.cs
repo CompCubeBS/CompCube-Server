@@ -17,7 +17,7 @@ public class ForceControlCommands(RestClient restClient, DiscordConfigHelper con
         
         var upvotes = await voteHelper.GetVotesFromThread(thread.Id);
         
-        await checker.AcceptMap(thread, upvotes);
+        await checker.AcceptMap(thread, upvotes, true);
         return "Forcefully queued map.";
     }
 
@@ -32,7 +32,7 @@ public class ForceControlCommands(RestClient restClient, DiscordConfigHelper con
         
         var upvotes = await voteHelper.GetVotesFromThread(thread.Id);
         
-        await checker.DenyMap(thread, upvotes);
+        await checker.DenyMap(thread, upvotes, true);
         return "Forcefully queued map.";
     }
 }
