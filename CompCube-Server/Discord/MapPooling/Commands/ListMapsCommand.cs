@@ -35,7 +35,7 @@ public class ListMapsCommand(MapData mapData, BeatSaverService beatSaver, Beatma
         };
     }
 
-private async Task<EmbedProperties> GetEmbedFromMapList(VotingMap[] maps)
+    private async Task<EmbedProperties> GetEmbedFromMapList(VotingMap[] maps)
     {
         var mapMetaData = await beatSaver.GetBeatmapsFromHashes(maps.Select(i => i.Hash).ToArray());
 

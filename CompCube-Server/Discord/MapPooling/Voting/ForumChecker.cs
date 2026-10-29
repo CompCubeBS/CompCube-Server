@@ -92,7 +92,7 @@ public class ForumChecker
             await AcceptMap(thread, voteState);
     }
 
-    private async Task AcceptMap(GuildThread forumThread, MapThreadUpvotes voteState)
+    public async Task AcceptMap(GuildThread forumThread, MapThreadUpvotes voteState)
     {
         await _mapLog.LogQueuedBeatmap(forumThread);
         
@@ -110,7 +110,7 @@ public class ForumChecker
             options.WithName($"[✅] {forumThread.Name}").WithArchived().WithLocked()); // .WithAppliedTags([acceptedTag.Id]));
     }
 
-    private async Task DenyMap(GuildThread forumThread, MapThreadUpvotes voteState)
+    public async Task DenyMap(GuildThread forumThread, MapThreadUpvotes voteState)
     {
         await _mapLog.LogDeniedBeatmap(forumThread, false);
 

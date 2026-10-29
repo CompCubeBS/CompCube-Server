@@ -20,7 +20,7 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
 
     private int _roundCount = 0;
     
-    private CancellationTokenSource _playerDisconnectionCts = new();
+    private readonly CancellationTokenSource _playerDisconnectionCts = new();
 
     public float Multiplier
     {
@@ -74,6 +74,8 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
 
                 if (_red.Health <= 0 || _blue.Health <= 0)
                     break;
+                
+                _playerDisconnectionCts.Token.ThrowIfCancellationRequested();
             }
 
             var winner = _red;
@@ -91,6 +93,10 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
                 winner.SendMatchResults(eloChange, true),
                 loser.SendMatchResults(eloChange, false)
             );
+            
+            _playerDisconnectionCts.Token.ThrowIfCancellationRequested();
+            
+            ApplyEloChanges(winner, loser, eloChange);
             
             Dispose();
         }
