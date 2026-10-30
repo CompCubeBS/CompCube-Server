@@ -1,4 +1,6 @@
-﻿using NetCord;
+﻿using CompCube_Server.Data;
+using CompCube_Server.Data.Schema;
+using NetCord;
 using NetCord.Rest;
 
 namespace CompCube_Server.Discord.MapPooling.Voting;
@@ -10,15 +12,17 @@ public class ForumChecker
     private readonly MapVoteHelper _mapVoteHelper;
     private readonly ILogger<ForumChecker> _logger;
     private readonly MapLog _mapLog;
-    
-    public ForumChecker(RestClient restClient, DiscordConfigHelper configHelper, MapVoteHelper mapVoteHelper, ILogger<ForumChecker> logger, MapLog mapLog)
+    private readonly BeatmapQueueData _beatmapQueueData;
+
+    public ForumChecker(RestClient restClient, DiscordConfigHelper configHelper, MapVoteHelper mapVoteHelper, ILogger<ForumChecker> logger, MapLog mapLog, BeatmapQueueData beatmapQueueData)
     {
         _restClient = restClient;
         _configHelper = configHelper;
         _mapVoteHelper = mapVoteHelper;
         _logger = logger;
         _mapLog = mapLog;
-        
+        _beatmapQueueData = beatmapQueueData;
+
         // Console.WriteLine("started");
         
         Task.Factory.StartNew(CheckMaps, TaskCreationOptions.LongRunning);
@@ -30,20 +34,10 @@ public class ForumChecker
         {
             try
             {
-                // Console.WriteLine("checking maps");
+                var allUnacceptedBeatmaps = _beatmapQueueData.GetAllBeatmapsWithoutVerdict();
 
-                var activeThreads = await _restClient.GetActiveGuildThreadsAsync(_configHelper.GuildId);
-
-                // Console.WriteLine(activeThreads.Count);
-
-                var self = await _restClient.GetCurrentApplicationAsync();
-
-                activeThreads = activeThreads.Where(i => i.OwnerId == self.Id).ToArray();
-
-                // Console.WriteLine(activeThreads.Count);
-
-                foreach (var thread in activeThreads)
-                    await CheckForum(thread);
+                foreach (var beatmap in allUnacceptedBeatmaps)
+                    await CheckBeatmap(beatmap);
 
                 await Task.Delay(new TimeSpan(1, 0, 0));
             }
@@ -54,16 +48,18 @@ public class ForumChecker
         }
     }
 
-    private async Task CheckForum(GuildThread thread)
+    private async Task CheckBeatmap(PooledBeatmap beatmap)
     {
-        // Console.WriteLine($"checking for {thread.Id}");
+        var thread = (await _restClient.GetActiveGuildThreadsAsync(_configHelper.GuildId)).FirstOrDefault(i => i.Id == beatmap.ThreadId);
         
-        if (thread.CreatedAt.AddDays(7) > DateTimeOffset.Now)
+        if (thread == null)
+            throw new Exception("No active thread found.");
+        
+        if (beatmap.DateAdded.AddDays(7) > DateTime.UtcNow)
             return;
 
-        if (thread.CreatedAt.AddDays(14) <= DateTimeOffset.Now)
+        if (beatmap.DateAdded.AddDays(14) <= DateTime.UtcNow)
         {
-            // Console.WriteLine("rejected for inactivity");
             await _mapLog.LogDeniedBeatmap(thread, true);
             
             await _restClient.SendMessageAsync(thread.Id, new MessageProperties()
@@ -84,20 +80,24 @@ public class ForumChecker
 
         if (voteState.Downvotes.Count >= 3)
         {
-            await DenyMap(thread, voteState);
+            await DenyMap(beatmap, voteState);
             return;
         }
 
         if (voteState.Upvotes.Count >= 3)
-            await AcceptMap(thread, voteState);
+            await AcceptMap(beatmap, voteState);
     }
 
-    public async Task AcceptMap(GuildThread forumThread, MapThreadUpvotes voteState, bool silent = false)
+    public async Task AcceptMap(PooledBeatmap beatmap, MapThreadUpvotes voteState)
     {
+        var forumThread = (await _restClient.GetActiveGuildThreadsAsync(_configHelper.GuildId)).FirstOrDefault(i => i.Id == beatmap.ThreadId);
+        
+        if (forumThread == null)
+            throw new Exception("No active thread found.");
+        
         await _mapLog.LogQueuedBeatmap(forumThread);
         
-        if (!silent)
-            await forumThread.SendMessageAsync(new MessageProperties()
+        await forumThread.SendMessageAsync(new MessageProperties()
             {
                 Embeds = [
                     new EmbedProperties()
@@ -109,14 +109,18 @@ public class ForumChecker
 
         await forumThread.ModifyAsync(options =>
             options.WithName($"[✅] {forumThread.Name}").WithArchived().WithLocked()); // .WithAppliedTags([acceptedTag.Id]));
+
+        await _beatmapQueueData.SetVerdict(beatmap.Guid, PooledBeatmap.AcceptanceStatus.Accepted);
     }
 
-    public async Task DenyMap(GuildThread forumThread, MapThreadUpvotes voteState, bool silent = false)
+    public async Task DenyMap(PooledBeatmap beatmap, MapThreadUpvotes voteState)
     {
-        await _mapLog.LogDeniedBeatmap(forumThread, false);
+        var forumThread = (await _restClient.GetActiveGuildThreadsAsync(_configHelper.GuildId)).FirstOrDefault(i => i.Id == beatmap.ThreadId);
+        
+        if (forumThread == null)
+            throw new Exception("No active thread found.");
 
-        if (!silent)
-            await forumThread.SendMessageAsync(new MessageProperties()
+        await forumThread.SendMessageAsync(new MessageProperties()
             {
                 Embeds = [
                     new EmbedProperties()
@@ -126,6 +130,8 @@ public class ForumChecker
                 ]
             });
         
-        await forumThread.ModifyAsync(options => options.WithName($"[❌] {forumThread.Name}").WithArchived().WithLocked()); // .WithLocked().WithAppliedTags([acceptedTag.Id]));
+        await forumThread.ModifyAsync(options => options.WithName($"[❌] {forumThread.Name}").WithArchived().WithLocked());
+        
+        await _beatmapQueueData.SetVerdict(beatmap.Guid, PooledBeatmap.AcceptanceStatus.Denied);
     }
 }

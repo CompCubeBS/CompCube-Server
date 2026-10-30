@@ -10,7 +10,7 @@ using CompCube_Server.Models.CompCube_Models.Models.Packets.UserPackets;
 
 namespace CompCube_Server.Networking.Client;
 
-public class DummyConnectedClient(MapData mapData) : IConnectedClient
+public class DummyConnectedClient : IConnectedClient
 {
     public event Action<DiscardMapsPacket, IConnectedClient>? OnUserDiscardedMaps;
     public event Action<MapSelectionPacket, IConnectedClient>? OnMapSelection;

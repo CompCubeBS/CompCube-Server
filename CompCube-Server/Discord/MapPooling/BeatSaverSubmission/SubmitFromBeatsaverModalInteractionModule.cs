@@ -1,4 +1,6 @@
-﻿using CompCube_Server.Api.BeatSaver;
+﻿using CompCube_Models.Models.Map;
+using CompCube_Server.Api.BeatSaver;
+using CompCube_Server.Data;
 using CompCube_Server.Extensions;
 using NetCord;
 using NetCord.Rest;
@@ -6,7 +8,11 @@ using NetCord.Services.ComponentInteractions;
 
 namespace CompCube_Server.Discord.MapPooling;
 
-public class SubmitFromBeatsaverModalInteractionModule(IConfiguration config, RestClient client, BeatSaverService beatSaverApi) : ComponentInteractionModule<ModalInteractionContext>
+public class SubmitFromBeatsaverModalInteractionModule(
+    IConfiguration config, 
+    RestClient client, 
+    BeatSaverService beatSaverApi,
+    BeatmapQueueData beatmapQueueData) : ComponentInteractionModule<ModalInteractionContext>
 {
     [ComponentInteraction("submitMapFromBeatsaverModal")]
     public async Task SubmitMapFromBeatsaverModalInteraction()
@@ -34,6 +40,9 @@ public class SubmitFromBeatsaverModalInteractionModule(IConfiguration config, Re
             await DmUser("Failed to fetch difficulty from form!");
             return;
         }
+        
+        var categoryEnum = Enum.Parse<VotingMap.Category>(category);
+        var diffEnum = Enum.Parse<VotingMap.DifficultyType>(difficulty);
 
         var beatSaverBeatmap = await beatSaverApi.GetBeatmapFromKey(bsr);
 
@@ -84,6 +93,8 @@ public class SubmitFromBeatsaverModalInteractionModule(IConfiguration config, Re
                 ]
             }]
         }));
+        
+        beatmapQueueData.AddBeatmap(beatSaverBeatmap.LatestVersion.Hash, categoryEnum, diffEnum, forumThread.Id, Context.User.Id);
 
         await forumThread.SendMessageAsync(new MessageProperties()
         {

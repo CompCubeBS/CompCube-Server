@@ -1,38 +1,37 @@
+using CompCube_Server.Data;
 using CompCube_Server.Discord.MapPooling.Voting;
 using NetCord.Rest;
 using NetCord.Services.ApplicationCommands;
 
 namespace CompCube_Server.Discord.MapPooling.Commands;
 
-public class ForceControlCommands(RestClient restClient, DiscordConfigHelper config, ForumChecker checker, MapVoteHelper voteHelper) : ApplicationCommandModule<ApplicationCommandContext>
+public class ForceControlCommands(BeatmapQueueData beatmapQueueData, ForumChecker checker, MapVoteHelper voteHelper) : ApplicationCommandModule<ApplicationCommandContext>
 {
     [SlashCommand("forceaccept", "Forcefully accept a map into queue")]
     public async Task<InteractionMessageProperties> ForceAcceptMap()
     {
-        var thread =
-            (await restClient.GetActiveGuildThreadsAsync(config.GuildId)).FirstOrDefault(i => i.Id == Context.Channel.Id);
+        var beatmap = beatmapQueueData.GetBeatmapFromThreadId(Context.Channel.Id);
 
-        if (thread == null)
-            return "No thread found";
+        if (beatmap == null)
+            return "No beatmap found!";
         
-        var upvotes = await voteHelper.GetVotesFromThread(thread.Id);
+        var upvotes = await voteHelper.GetVotesFromThread(beatmap.ThreadId);
         
-        checker.AcceptMap(thread, upvotes, true);
+        checker.AcceptMap(beatmap, upvotes);
         return "Forcefully queued map.";
     }
 
     [SlashCommand("forcedeny", "Forcefully deny a map")]
     public async Task<InteractionMessageProperties> ForceDenyMap()
     {
-        var thread =
-            (await restClient.GetActiveGuildThreadsAsync(config.GuildId)).FirstOrDefault(i => i.Id == Context.Channel.Id);
+        var beatmap = beatmapQueueData.GetBeatmapFromThreadId(Context.Channel.Id);
 
-        if (thread == null)
-            return "No thread found";
+        if (beatmap == null)
+            return "No beatmap found!";
         
-        var upvotes = await voteHelper.GetVotesFromThread(thread.Id);
+        var upvotes = await voteHelper.GetVotesFromThread(beatmap.ThreadId);
         
-        checker.DenyMap(thread, upvotes, true);
+        checker.DenyMap(beatmap, upvotes);
         return "Forcefully queued map.";
     }
 }

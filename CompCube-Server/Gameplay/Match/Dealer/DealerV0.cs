@@ -4,7 +4,7 @@ using CompCube_Server.Interfaces;
 
 namespace CompCube_Server.Gameplay.Match.Dealer;
 
-public class DealerV0(MapData mapData) : IDealer
+public class DealerV0(BeatmapPoolData beatmapPoolData) : IDealer
 {
     private static readonly Random Random = new();
     
@@ -12,7 +12,7 @@ public class DealerV0(MapData mapData) : IDealer
     
     public VotingMap[] PullNewCards(int count)
     {
-        var maps = mapData.GetAllMapsFromActiveBatches().Where(i => !_discardedOrAlreadyPulled.Contains(i));
+        var maps = beatmapPoolData.GetAllMapsFromActiveBatches().Where(i => !_discardedOrAlreadyPulled.Contains(i));
 
         var shuffled = maps.OrderBy(_ => Random.Next()).ToList();
 

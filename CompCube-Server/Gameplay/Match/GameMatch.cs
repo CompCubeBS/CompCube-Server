@@ -11,7 +11,7 @@ using CompCube_Server.Models.CompCube_Models.Models.Packets.UserPackets;
 
 namespace CompCube_Server.Gameplay.Match;
 
-public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData userData) : IDisposable
+public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolData, UserData userData) : IDisposable
 {
     private MatchSettings _matchSettings;
     
@@ -37,8 +37,8 @@ public class GameMatch(ILogger<GameMatch> logger, MapData mapData, UserData user
     {
         _matchSettings = matchSettings;
 
-        _red = new MatchPlayer(red, new DealerV0(mapData), true);
-        _blue = new MatchPlayer(blue, new DealerV0(mapData), false);
+        _red = new MatchPlayer(red, new DealerV0(beatmapPoolData), true);
+        _blue = new MatchPlayer(blue, new DealerV0(beatmapPoolData), false);
     }
 
     public void StartMatch()

@@ -103,8 +103,8 @@ public class Program
         services.AddSingleton<ConfigHelper>();
 
         services.AddSingleton<UserData>();
-        services.AddSingleton<MapData>();
         services.AddSingleton<BeatmapPoolData>();
+        services.AddSingleton<AuthData>();
         
         services.AddSingleton<ServerStatusManager>();
         
@@ -122,11 +122,6 @@ public class Program
 
         services.AddSingleton<BeatSaverService>();
         services.AddSingleton<BeatKhanaService>();
-
-        services.AddSingleton<LeaderboardApiController>();
-        services.AddSingleton<MapApiController>();
-        services.AddSingleton<ServerStatusApiController>();
-        services.AddSingleton<UserApiController>();
 
         if (!_useDiscordIntegration) 
             return;
