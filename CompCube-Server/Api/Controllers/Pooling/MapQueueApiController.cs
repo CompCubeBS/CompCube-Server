@@ -7,19 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace CompCube_Server.Api.Controllers.Pooling;
 
 [ApiController]
-public class MapQueueApiController(ConfigHelper helper, BeatmapPoolData queue, BeatmapPoolData beatmapPoolData) : ControllerBase
+public class MapQueueApiController(ConfigHelper helper, BeatmapPoolData beatmapPoolData) : ControllerBase
 {
-    [HttpGet("/api/queue")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public ActionResult<VotingMap[]> GetQueue(string secret)
-    {
-        if (secret != helper.Secret)
-            return Forbid();
-
-        return queue.GetMaps().ToArray();
-    }
-
     [HttpGet("/api/queue/qualified")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<VotingMap[]> GetQualifiedMaps()
@@ -42,5 +31,4 @@ public class MapQueueApiController(ConfigHelper helper, BeatmapPoolData queue, B
 
         return Ok();
     }
-    
 }
