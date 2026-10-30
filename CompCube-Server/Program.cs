@@ -47,6 +47,24 @@ public class Program
         
         if (_useDiscordIntegration)
             builder.Services.AddDiscordGateway(options => options.Intents = GatewayIntents.All).AddApplicationCommands().AddComponentInteractions<ButtonInteraction, ButtonInteractionContext>().AddComponentInteractions<ModalInteraction, ModalInteractionContext>().AddGatewayHandlers(typeof(Program).Assembly);
+
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("RequireAuth", policy => policy.Requirements.Add(new AuthenticationCheck()))
+            .AddPolicy("RequireMapPooler", policy =>
+            {
+                policy.Requirements.Add(new AuthenticationCheck());
+                policy.Requirements.Add(new PermissionCheck("role:pooler"));
+            })
+            .AddPolicy("RequireModerator", policy =>
+            {
+                policy.Requirements.Add(new AuthenticationCheck());
+                policy.Requirements.Add(new PermissionCheck("role:moderator"));
+            })
+            .AddPolicy("RequireDev", policy =>
+            {
+                policy.Requirements.Add(new AuthenticationCheck());
+                policy.Requirements.Add(new PermissionCheck("role:dev"));
+            });
         
         builder.Services.AddControllers().AddNewtonsoftJson();
         builder.Services.AddEndpointsApiExplorer();
@@ -75,8 +93,6 @@ public class Program
         });
         
         var host = builder.Build();
-        
-        
         
         host.UseSwagger();
         host.UseSwaggerUI();

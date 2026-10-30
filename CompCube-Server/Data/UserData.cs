@@ -23,6 +23,15 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         0
         );
 
+    public UserInfo[] GetUserInfoByPermission(string permissionFilter)
+    {
+        using var scope = scopeFactory.CreateScope();
+        
+        using var dataContext = scope.ServiceProvider.GetService<DataContext>()!;
+
+        return dataContext.Users.Include(i => i.Flairs).Where(i => i.Flairs.Any(j => j.Permissions.Contains(permissionFilter)) || i.Permissions.Contains(permissionFilter)).Select(i => GetUserInfoFromUserModel(i)).ToArray();
+    }
+
     public List<UserStatistics> GetLeaderboardRange(int start, int range, int season = -1)
     {
         if (season == -1)
@@ -384,11 +393,5 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         return flair.Select(i => new Flair(i.Name, i.Color, i.Permissions.ToArray())).ToArray();
     }
 
-    private UserInfo? GetUserInfoFromUserModel(User? user)
-    {
-        if (user == null)
-            return null;
-        
-        return new UserInfo(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl, GetFlairsFromModel(user.Flairs), user.Banned);
-    }
+    private UserInfo GetUserInfoFromUserModel(User user) => new(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl, GetFlairsFromModel(user.Flairs), user.Banned);
 }

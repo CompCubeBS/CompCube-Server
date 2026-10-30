@@ -2,6 +2,7 @@
 using CompCube_Server.Api.BeatSaver;
 using CompCube_Server.Config;
 using CompCube_Server.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 
@@ -48,7 +49,8 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public IActionResult AddMap(string secret, 
+    [Authorize(Policy = "RequireMapPooler")]
+    public IActionResult AddMap( 
         string hash, 
         string difficulty, 
         string category,
@@ -57,15 +59,10 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
         string poolIds
         )
     {
-        if (secret != config.Secret)
-            return Forbid();
-        
-        if (!Enum.TryParse<VotingMap.DifficultyType>(difficulty, out var difficultyType))
+        if (!Enum.TryParse<VotingMap.DifficultyType>(difficulty, out var difficultyType) || 
+            !Enum.TryParse<VotingMap.Category>(category, out var categoryType))
             return BadRequest();
-        
-        if (!Enum.TryParse<VotingMap.Category>(category, out var categoryType))
-            return BadRequest();
-        
+
         beatmapPoolData.AddMap(hash, difficultyType, categoryType, maxScore, durationSeconds, poolIds.Split(",").Select(i => int.Parse(i)).ToArray());
 
         return Ok();

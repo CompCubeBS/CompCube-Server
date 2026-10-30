@@ -2,6 +2,7 @@
 using CompCube_Server.Config;
 using CompCube_Server.Data;
 using CompCube_Server.Discord;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompCube_Server.Api.Controllers.Pooling;
@@ -11,17 +12,17 @@ public class MapQueueApiController(ConfigHelper helper, BeatmapPoolData beatmapP
 {
     [HttpGet("/api/queue/qualified")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [Authorize(Policy = "RequireMapPooler")]
     public ActionResult<VotingMap[]> GetQualifiedMaps()
     {
         return beatmapPoolData.GetQualifiedMaps();
     }
 
     [HttpPost("/api/maps/assignBatch")]
-    public IActionResult AssignBatch(string guid, int batchNum, string secret)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [Authorize(Policy = "RequireMapPooler")]
+    public IActionResult AssignBatch(string guid, int batchNum)
     {
-        if (secret != helper.Secret)
-            return Forbid();
-        
         var map = beatmapPoolData.GetBeatmapByGuid(guid);
         
         if (map is null)
