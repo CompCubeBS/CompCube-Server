@@ -4,13 +4,13 @@ using CompCube_Server.Data.Schema;
 
 namespace CompCube_Server.Data;
 
-public class AuthData(IServiceScope scopeService, ILogger<AuthData> logger)
+public class AuthData(IServiceScopeFactory scopeService, ILogger<AuthData> logger)
 {
     public void AddOAuthState(string state, string returnTo, AuthState.ResponseModeType responseMode)
     {
         try
         {
-            using var scope = scopeService.ServiceProvider.CreateScope();
+            using var scope = scopeService.CreateScope();
 
             var context = scope.ServiceProvider.GetService<DataContext>()!;
 
@@ -36,7 +36,7 @@ public class AuthData(IServiceScope scopeService, ILogger<AuthData> logger)
 
     public AuthState? ConsumeOAuthState(string state)
     {
-        using var scope = scopeService.ServiceProvider.CreateScope();
+        using var scope = scopeService.CreateScope();
         var context = scope.ServiceProvider.GetService<DataContext>()!;
         
         var authState = context.AuthStates

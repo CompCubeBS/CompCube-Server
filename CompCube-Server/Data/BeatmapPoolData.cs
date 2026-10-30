@@ -1,11 +1,57 @@
 ﻿using CompCube_Models.Models.Map;
+using CompCube_Server.Config;
 using CompCube_Server.Data.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompCube_Server.Data;
 
-public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapPoolData> logger)
+public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapPoolData> logger, ConfigHelper helper)
 {
+    public List<VotingMap> GetAllMapsFromActiveBatches()
+    {
+        using var scope = scopeFactory.CreateScope();
+
+        var context = scope.ServiceProvider.GetService<DataContext>()!;
+        
+        var pools = context.Pools.Include(p => p.Maps).Where(i => helper.ActivePools.AsEnumerable().Contains(i.Id));
+        
+        var maps = new List<VotingMap>();
+
+        foreach (var pool in pools)
+        {
+            maps = maps.Concat(pool.Maps.Select(i => new VotingMap(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))).ToList();
+        }
+
+        return maps;
+    }
+
+    public VotingMap? GetBeatmapByGuid(string guid)
+    {
+        using var scope = scopeFactory.CreateScope();
+
+        using var dataContext = scope.ServiceProvider.GetService<DataContext>()!;
+        
+        var beatmap = dataContext.Beatmaps.FirstOrDefault(i => i.Guid == guid);
+
+        if (beatmap == null)
+            return null;
+        
+        return new VotingMap(beatmap.Guid, beatmap.Hash, beatmap.Difficulty, beatmap.Category, beatmap.MaxScore, beatmap.DurationSeconds);
+    }
+    
+    public VotingMap[] GetQualifiedMaps()
+    {
+        using var scope = scopeFactory.CreateScope();
+
+        using var dataContext = scope.ServiceProvider.GetService<DataContext>()!;
+        
+        return dataContext.Beatmaps
+            .Include(i => i.Pools)
+            .Where(i => i.Pools.Count == 0)
+            .Select(i => new VotingMap(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
+            .ToArray();
+    }
+    
     public void AssignBatch(string guid, int batch)
     {
         using var scope = scopeFactory.CreateScope();

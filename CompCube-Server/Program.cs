@@ -47,7 +47,7 @@ public class Program
         if (_useDiscordIntegration)
             builder.Services.AddDiscordGateway(options => options.Intents = GatewayIntents.All).AddApplicationCommands().AddComponentInteractions<ButtonInteraction, ButtonInteractionContext>().AddComponentInteractions<ModalInteraction, ModalInteractionContext>().AddGatewayHandlers(typeof(Program).Assembly);
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers().AddNewtonsoftJson();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
@@ -103,8 +103,9 @@ public class Program
         services.AddSingleton<ConfigHelper>();
 
         services.AddSingleton<UserData>();
-        services.AddSingleton<MapData>();
         services.AddSingleton<BeatmapPoolData>();
+        services.AddSingleton<AuthData>();
+        services.AddSingleton<BeatmapQueueData>();
         
         services.AddSingleton<ServerStatusManager>();
         
@@ -122,11 +123,6 @@ public class Program
 
         services.AddSingleton<BeatSaverService>();
         services.AddSingleton<BeatKhanaService>();
-
-        services.AddSingleton<LeaderboardApiController>();
-        services.AddSingleton<MapApiController>();
-        services.AddSingleton<ServerStatusApiController>();
-        services.AddSingleton<UserApiController>();
 
         if (!_useDiscordIntegration) 
             return;

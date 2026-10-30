@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CompCube_Server.Api.Controllers.Pooling;
 
 [ApiController]
-public class MapQueueApiController(ConfigHelper helper, BeatmapPoolData queue) : ControllerBase
+public class MapQueueApiController(ConfigHelper helper, BeatmapPoolData queue, BeatmapPoolData beatmapPoolData) : ControllerBase
 {
     [HttpGet("/api/queue")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -20,18 +20,25 @@ public class MapQueueApiController(ConfigHelper helper, BeatmapPoolData queue) :
         return queue.GetMaps().ToArray();
     }
 
-    [HttpPut("/api/queue/create-batch")]
+    [HttpGet("/api/queue/qualified")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public IActionResult CreateBatch(string secret, int count, int batch)
+    public ActionResult<VotingMap[]> GetQualifiedMaps()
+    {
+        return beatmapPoolData.GetQualifiedMaps();
+    }
+
+    [HttpPost("/api/maps/assignBatch")]
+    public IActionResult AssignBatch(string guid, int batchNum, string secret)
     {
         if (secret != helper.Secret)
             return Forbid();
-
-        var maps = queue.GetMaps().Take(count);
         
-        foreach (var map in maps)
-            queue.AssignBatch(map.Guid, batch);
+        var map = beatmapPoolData.GetBeatmapByGuid(guid);
+        
+        if (map is null)
+            return NotFound();
+        
+        beatmapPoolData.AssignBatch(guid, batchNum);
 
         return Ok();
     }

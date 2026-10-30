@@ -14,12 +14,18 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
     public DbSet<Score> Scores => Set<Score>();
     public DbSet<UserFlair> UserFlairs => Set<UserFlair>();
     public DbSet<AuthState> AuthStates => Set<AuthState>();
+    public DbSet<PooledBeatmap> PooledBeatmaps => Set<PooledBeatmap>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AuthState>(entity =>
         {
             entity.ToTable("oauth_states");
+        });
+
+        modelBuilder.Entity<PooledBeatmap>(entity =>
+        {
+            entity.ToTable("pooled_beatmaps");
         });
         
         modelBuilder.Entity<Beatmap>(entity =>

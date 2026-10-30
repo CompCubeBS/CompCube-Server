@@ -8,17 +8,17 @@ using Newtonsoft.Json.Linq;
 namespace CompCube_Server.Api.Controllers;
 
 [ApiController]
-public class MapApiController(MapData mapData, BeatmapPoolData beatmapPoolData, BeatSaverService beatSaver, ConfigHelper config) : ControllerBase
+public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService beatSaver, ConfigHelper config) : ControllerBase
 {
     [HttpGet("/api/maps/hashes")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<string[]> GetAllMapHashes() => mapData.GetAllMapsFromActiveBatches().Select(i => i.Hash).ToArray();
+    public ActionResult<string[]> GetAllMapHashes() => beatmapPoolData.GetAllMapsFromActiveBatches().Select(i => i.Hash).ToArray();
 
     [HttpGet("/api/maps/playlist")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<string> GetPlaylist()
     {
-        var allMaps = mapData.GetAllMapsFromActiveBatches();
+        var allMaps = beatmapPoolData.GetAllMapsFromActiveBatches();
 
         var songs = new List<PlaylistSong>();
 
