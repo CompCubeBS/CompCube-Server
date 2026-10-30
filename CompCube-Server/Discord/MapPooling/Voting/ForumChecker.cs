@@ -51,9 +51,12 @@ public class ForumChecker
     private async Task CheckBeatmap(PooledBeatmap beatmap)
     {
         var thread = (await _restClient.GetActiveGuildThreadsAsync(_configHelper.GuildId)).FirstOrDefault(i => i.Id == beatmap.ThreadId);
-        
+
         if (thread == null)
-            throw new Exception("No active thread found.");
+        {
+            _logger.LogWarning("No active thread found for this map! Skipping...");
+            return;
+        }
         
         if (beatmap.DateAdded.AddDays(7) > DateTime.UtcNow)
             return;
