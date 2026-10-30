@@ -94,7 +94,7 @@ public class SubmitFromBeatsaverModalInteractionModule(
             }]
         }));
         
-        beatmapQueueData.AddBeatmap(beatSaverBeatmap.LatestVersion.Hash, categoryEnum, diffEnum, forumThread.Id, Context.User.Id);
+        beatmapQueueData.AddBeatmap(beatSaverBeatmap.LatestVersion.Hash, categoryEnum, diffEnum, Context.User.Id, forumThread.Id);
 
         await forumThread.SendMessageAsync(new MessageProperties()
         {
