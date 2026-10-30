@@ -13,4 +13,6 @@ public class UserFlair
     
     [Required]
     public required string Color { get; set; }
+
+    [Required] public required List<string> Permissions { get; set; } = [];
 }

@@ -36,11 +36,6 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("users");
-            
-            entity.HasOne(p => p.Flair)
-                .WithMany()
-                .HasForeignKey(u => u.FlairGuid)
-                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Pool>(entity =>

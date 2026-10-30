@@ -1,5 +1,6 @@
 using CompCube_Server.Api.BeatSaver;
 using CompCube_Server.Api.Controllers;
+using CompCube_Server.Api.Controllers.Middleware;
 using CompCube_Server.Config;
 using CompCube_Server.Data;
 using CompCube_Server.Discord;
@@ -46,7 +47,7 @@ public class Program
         
         if (_useDiscordIntegration)
             builder.Services.AddDiscordGateway(options => options.Intents = GatewayIntents.All).AddApplicationCommands().AddComponentInteractions<ButtonInteraction, ButtonInteractionContext>().AddComponentInteractions<ModalInteraction, ModalInteractionContext>().AddGatewayHandlers(typeof(Program).Assembly);
-
+        
         builder.Services.AddControllers().AddNewtonsoftJson();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
@@ -74,7 +75,9 @@ public class Program
         });
         
         var host = builder.Build();
-            
+        
+        
+        
         host.UseSwagger();
         host.UseSwaggerUI();
 

@@ -13,7 +13,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         "0", 
         null, 
         "https://cdn.scoresaber.com/avatars/oculus.png?v=1781213201",
-        null,
+        [],
         false,
         0,
         1000,
@@ -47,7 +47,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
         var users = context.Users
             .Include(p => p.CompetetiveStatistics)
-            .Include(p => p.Flair)
+            .Include(p => p.Flairs)
             .Where(p => p.CompetetiveStatistics.Any(i => i.Season == season))
             .Where(p => !p.Banned)
             .OrderBy(p => p.CompetetiveStatistics.First(i => i.Season == season).Elo).ToArray();
@@ -66,7 +66,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             var stats = user.CompetetiveStatistics.First(k => k.Season == season);
 
             return new UserStatistics(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl,
-                GetFlairFromModel(user.Flair), user.Banned, GetRankFromElo(stats.Elo, season, context), stats.Elo, stats.Wins,
+                GetFlairsFromModel(user.Flairs), user.Banned, GetRankFromElo(stats.Elo, season, context), stats.Elo, stats.Wins,
                 stats.TotalGamesPlayed, stats.WinStreak, stats.BestWinStreak);
         }).ToList();
     }
@@ -321,7 +321,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         var context = scope.ServiceProvider.GetService<DataContext>()!;
         
         var users = context.Users.Include(p => p.CompetetiveStatistics)
-            .Include(p => p.Flair)
+            .Include(p => p.Flairs)
             .Where(i => !i.Banned)
             .Where(i => i.CompetetiveStatistics.Any(j => j.Season == season))
             .ToArray();
@@ -331,7 +331,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             var stats = user.CompetetiveStatistics.First(k => k.Season == season);
 
             return new UserStatistics(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl,
-                GetFlairFromModel(user.Flair), user.Banned, GetRankFromElo(stats.Elo, season, context), stats.Elo, stats.Wins,
+                GetFlairsFromModel(user.Flairs), user.Banned, GetRankFromElo(stats.Elo, season, context), stats.Elo, stats.Wins,
                 stats.TotalGamesPlayed, stats.WinStreak, stats.BestWinStreak);
         }).ToList();
     }
@@ -342,7 +342,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         
         var context = scope.ServiceProvider.GetService<DataContext>()!;
         
-        var user = context.Users.Include(user => user.Flair).FirstOrDefault(i => i.PlatformId == platformId);
+        var user = context.Users.Include(user => user.Flairs).FirstOrDefault(i => i.PlatformId == platformId);
 
         return GetUserInfoFromUserModel(user);
     }
@@ -356,7 +356,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         if (season == -1)
             season = configHelper.Season;
         
-        var user = context.Users.Include(p => p.CompetetiveStatistics).Include(user => user.Flair).FirstOrDefault(i => i.PlatformId == platformId);
+        var user = context.Users.Include(p => p.CompetetiveStatistics).Include(user => user.Flairs).FirstOrDefault(i => i.PlatformId == platformId);
 
         if (user == null)
             return null;
@@ -368,7 +368,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
         var rank = GetRankFromElo(stats.Elo, season, context);
         
-        return new UserStatistics(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl, GetFlairFromModel(user.Flair), user.Banned, rank, stats.Elo, stats.Wins, stats.TotalGamesPlayed, stats.WinStreak, stats.BestWinStreak);
+        return new UserStatistics(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl, GetFlairsFromModel(user.Flairs), user.Banned, rank, stats.Elo, stats.Wins, stats.TotalGamesPlayed, stats.WinStreak, stats.BestWinStreak);
     }
 
     private int GetRankFromElo(int elo, int season, DataContext context)
@@ -379,12 +379,9 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         return context.CompetitiveStatistics.Where(i => i.Season == season).Count(i => i.Elo > elo) + 1;
     }
 
-    private Flair? GetFlairFromModel(UserFlair? flair)
+    private Flair[] GetFlairsFromModel(List<UserFlair> flair)
     {
-        if (flair == null)
-            return null;
-
-        return new Flair(flair.Name, flair.Color);
+        return flair.Select(i => new Flair(i.Name, i.Color, i.Permissions.ToArray())).ToArray();
     }
 
     private UserInfo? GetUserInfoFromUserModel(User? user)
@@ -392,6 +389,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         if (user == null)
             return null;
         
-        return new UserInfo(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl, GetFlairFromModel(user.Flair), user.Banned);
+        return new UserInfo(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl, GetFlairsFromModel(user.Flairs), user.Banned);
     }
 }
