@@ -105,6 +105,7 @@ public class Program
         services.AddSingleton<UserData>();
         services.AddSingleton<BeatmapPoolData>();
         services.AddSingleton<AuthData>();
+        services.AddSingleton<BeatmapQueueData>();
         
         services.AddSingleton<ServerStatusManager>();
         
