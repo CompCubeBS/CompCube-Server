@@ -70,20 +70,19 @@ public class BeatmapQueueData(
         {
             var beatSaverMap = await beatSaverService.GetBeatmapFromHash(map.Hash);
 
-            if (beatSaverMap == null)
-            {
-                logger.LogError("Could not find beatmap with hash '{MapHash}' on BeatSaver!", map.Hash);
-                return;
-            }
-
-            var beatSaverDiff = beatSaverMap
-                .LatestVersion
-                .Difficulties
-                .FirstOrDefault(i =>
-                    i.Characteristic == BeatmapDifficulty.BeatmapCharacteristic.Standard &&
-                    (int)i.Difficulty == (int)map.Difficulty);
+            var diff = beatSaverMap["versions"]![0]!["diffs"]!.FirstOrDefault(i =>
+                i.Value<string>("characteristic") == "Standard"
+                && i.Value<string>("difficulty") == map.Difficulty.ToString()
+            );
             
-            poolData.AddMap(map.Hash, map.Difficulty, map.Category, beatSaverDiff!.Notes, (int) Math.Ceiling(beatSaverDiff!.Seconds));
+            if (diff == null)
+                throw new Exception($"Could not find difficulty '{map.Difficulty}'");
+
+            var duration = (int) Math.Ceiling(diff.Value<float>("seconds"));
+
+            var maxScore = diff.Value<int>("maxScore");
+            
+            poolData.AddMap(map.Hash, map.Difficulty, map.Category, maxScore, duration);
         }
     }
 }

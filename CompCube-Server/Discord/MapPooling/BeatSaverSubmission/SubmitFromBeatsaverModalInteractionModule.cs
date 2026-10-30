@@ -5,6 +5,7 @@ using CompCube_Server.Extensions;
 using NetCord;
 using NetCord.Rest;
 using NetCord.Services.ComponentInteractions;
+using Newtonsoft.Json.Linq;
 
 namespace CompCube_Server.Discord.MapPooling;
 
@@ -44,9 +45,13 @@ public class SubmitFromBeatsaverModalInteractionModule(
         var categoryEnum = Enum.Parse<VotingMap.Category>(category);
         var diffEnum = Enum.Parse<VotingMap.DifficultyType>(difficulty);
 
-        var beatSaverBeatmap = await beatSaverApi.GetBeatmapFromKey(bsr);
+        JObject beatSaverBeatmap;
 
-        if (beatSaverBeatmap is null)
+        try
+        {
+            beatSaverBeatmap = await beatSaverApi.GetBeatmapFromKey(bsr);
+        }
+        catch
         {
             await DmUser($"Failed to fetch beatmap {bsr} from beatsaver! (Are you sure this is the right key?)");
             return;
@@ -54,12 +59,12 @@ public class SubmitFromBeatsaverModalInteractionModule(
         
         var poolingChannelId = config.GetSection("Discord").GetSection("PoolingChannelIds").GetValue<ulong>(category);
 
-        var forumThread = await client.CreateForumGuildThreadAsync(poolingChannelId, new ForumGuildThreadProperties($"({beatSaverBeatmap.Metadata.LevelAuthorName}) {beatSaverBeatmap.Name}", new ForumGuildThreadMessageProperties
+        var forumThread = await client.CreateForumGuildThreadAsync(poolingChannelId, new ForumGuildThreadProperties($"({beatSaverBeatmap["metadata"]!.Value<string>("levelAuthorName")}) {beatSaverBeatmap.Value<string>("name")}", new ForumGuildThreadMessageProperties
         {
             Embeds = [new EmbedProperties
             {
-                Image = new EmbedImageProperties(beatSaverBeatmap.LatestVersion.CoverURL),
-                Title = beatSaverBeatmap.Name,
+                Image = new EmbedImageProperties(beatSaverBeatmap["versions"]![0]!.Value<string>("coverURL")),
+                Title = beatSaverBeatmap.Value<string>("name"),
                 // Description = beatSaverBeatmap.Description,
                 Fields = [new EmbedFieldProperties
                     {
@@ -88,13 +93,13 @@ public class SubmitFromBeatsaverModalInteractionModule(
                     {
                         Inline = false,
                         Name = "Mapper",
-                        Value = $"{beatSaverBeatmap.Metadata.LevelAuthorName} ({beatSaverBeatmap.Uploader.Name})"
+                        Value = $"{beatSaverBeatmap["metadata"]!.Value<string>("levelAuthorName")} ({beatSaverBeatmap["uploader"]!.Value<string>("name")})"
                     },
                 ]
             }]
         }));
         
-        beatmapQueueData.AddBeatmap(beatSaverBeatmap.LatestVersion.Hash, categoryEnum, diffEnum, Context.User.Id, forumThread.Id);
+        beatmapQueueData.AddBeatmap(beatSaverBeatmap["versions"]![0]!.Value<string>("hash")!, categoryEnum, diffEnum, Context.User.Id, forumThread.Id);
 
         await forumThread.SendMessageAsync(new MessageProperties()
         {

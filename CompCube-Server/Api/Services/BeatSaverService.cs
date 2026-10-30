@@ -2,35 +2,53 @@
 using BeatSaverSharp.Models;
 using CompCube_Server.Api.Controllers;
 using CompCube_Server.Data;
+using Newtonsoft.Json.Linq;
 
 namespace CompCube_Server.Api.BeatSaver;
 
-public class BeatSaverService(BeatmapPoolData beatmapPoolData, ILogger<BeatSaverService> logger)
+public class BeatSaverService(ILogger<BeatSaverService> logger)
 {
-    private readonly BeatSaverSharp.BeatSaver _beatSaver = new(new BeatSaverOptions("CompCube-Server", new Version("1.0.0")));
-
-    public async Task<Beatmap?> GetBeatmapFromHash(string hash) => await _beatSaver.BeatmapByHash(hash);
-
-    public async Task<Beatmap?> GetBeatmapFromKey(string key) => await _beatSaver.Beatmap(key);
-
-    public async Task<Beatmap[]?> GetBeatmapsFromHashes(string[] hashes) => (await _beatSaver.BeatmapByHash(hashes)).Select(i => i.Value).ToArray();
-
-    // no
-    public int CalculateMaxScoreFromNoteCount(int noteCount)
+    private readonly HttpClient _httpClient = new();
+    
+    public async Task<JObject> GetBeatmapFromHash(string hash)
     {
-        var multipliedScore = 0;
-
-        multipliedScore += 115 * 2 * 1;
-        noteCount -= 2;
-
-        multipliedScore += 115 * 4 * 2;
-        noteCount -= 4;
-
-        multipliedScore += 115 * 8 * 4;
-        noteCount -= 8;
+        var response = await _httpClient.GetAsync($"https://api.beatsaver.com/maps/hash/{hash}");
         
-        multipliedScore += 115 * noteCount * 8;
+        response.EnsureSuccessStatusCode();
         
-        return multipliedScore;
+        return JObject.Parse(await response.Content.ReadAsStringAsync());
+    }
+
+    public async Task<JObject> GetBeatmapFromKey(string key)
+    {
+        var response = await _httpClient.GetAsync($"https://api.beatsaver.com/maps/id/{key}");
+        
+        response.EnsureSuccessStatusCode();
+
+        return JObject.Parse(await response.Content.ReadAsStringAsync());
+    }
+
+    public async Task<Dictionary<string, JObject>> GetBeatmapsFromHashes(string[] hashes)
+    {
+        var response = await _httpClient.GetAsync($"https://api.beatsaver.com/maps/hash/{string.Join(',', hashes)}");
+        
+        response.EnsureSuccessStatusCode();
+        
+        var jObject = JObject.Parse(await response.Content.ReadAsStringAsync());
+        
+        var dictionary = new Dictionary<string, JObject>();
+
+        foreach (var entry in jObject)
+        {
+            if (entry.Value == null)
+            {
+                logger.LogWarning("No hash {hash} found on BeatSaver!", entry.Key);
+                continue;
+            }
+            
+            dictionary.Add(entry.Key, entry.Value.ToObject<JObject>()!);
+        }
+
+        return dictionary;
     }
 }

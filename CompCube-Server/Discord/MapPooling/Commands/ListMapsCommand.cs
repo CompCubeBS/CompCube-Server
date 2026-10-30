@@ -10,7 +10,7 @@ namespace CompCube_Server.Discord.MapPooling.Commands;
 public class ListMapsCommand(BeatmapPoolData beatmapPoolData, BeatSaverService beatSaver, BeatmapPoolData queue)
     : ApplicationCommandModule<ApplicationCommandContext>
 {
-    [SlashCommand("maps", "Shows all active and playable maps.", Contexts = [InteractionContextType.Guild])]
+    /*[SlashCommand("maps", "Shows all active and playable maps.", Contexts = [InteractionContextType.Guild])]
     public async Task<InteractionMessageProperties> ShowMaps()
     {
         var maps = beatmapPoolData.GetAllMapsFromActiveBatches().OrderBy(i => i.MapCategory);
@@ -39,7 +39,7 @@ public class ListMapsCommand(BeatmapPoolData beatmapPoolData, BeatSaverService b
     {
         var mapMetaData = await beatSaver.GetBeatmapsFromHashes(maps.Select(i => i.Hash).ToArray());
 
-        if (mapMetaData == null || mapMetaData.Length == 0)
+        if (mapMetaData.Count == 0)
             return new EmbedProperties()
             {
                 Description = "No maps!"
@@ -47,7 +47,7 @@ public class ListMapsCommand(BeatmapPoolData beatmapPoolData, BeatSaverService b
 
         return new EmbedProperties()
         {
-            Description = string.Join("\n", mapMetaData.Select(i => $"{i.Metadata.SongAuthorName} - {i.Metadata.SongName} (Mapped by {i.Metadata.LevelAuthorName})"))
+            Description = string.Join("\n", mapMetaData.Select(i => $"{i.Value["metadata"]!.Value<string>("songAuthorName")} - {i.Value["metadata"]!.Value<string>("songName")} (Mapped by {i.Value["metaData"]!.Value<string>("levelAuthorName")})"))
         };
-    }
+    }*/
 }
