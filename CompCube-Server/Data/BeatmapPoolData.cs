@@ -24,6 +24,33 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
 
         return maps;
     }
+
+    public VotingMap? GetBeatmapByGuid(string guid)
+    {
+        using var scope = scopeFactory.CreateScope();
+
+        using var dataContext = scope.ServiceProvider.GetService<DataContext>()!;
+        
+        var beatmap = dataContext.Beatmaps.FirstOrDefault(i => i.Guid == guid);
+
+        if (beatmap == null)
+            return null;
+        
+        return new VotingMap(beatmap.Guid, beatmap.Hash, beatmap.Difficulty, beatmap.Category, beatmap.MaxScore, beatmap.DurationSeconds);
+    }
+    
+    public VotingMap[] GetQualifiedMaps()
+    {
+        using var scope = scopeFactory.CreateScope();
+
+        using var dataContext = scope.ServiceProvider.GetService<DataContext>()!;
+        
+        return dataContext.Beatmaps
+            .Include(i => i.Pools)
+            .Where(i => i.Pools.Count == 0)
+            .Select(i => new VotingMap(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
+            .ToArray();
+    }
     
     public void AssignBatch(string guid, int batch)
     {

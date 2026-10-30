@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CompCube_Server.Data.Schema;
 
-[Index(nameof(Hash), IsUnique = true)]
 [Index(nameof(ThreadId), IsUnique = true)]
 public class PooledBeatmap
 {
