@@ -1,6 +1,8 @@
+using CompCube_Models.Models.ClientData;
 using CompCube_Models.Models.Map;
 using CompCube_Server.Data.Schema;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace CompCube_Server.Data;
 
@@ -16,6 +18,14 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
     public DbSet<AuthState> AuthStates => Set<AuthState>();
     public DbSet<PooledBeatmap> PooledBeatmaps => Set<PooledBeatmap>();
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.ConfigureWarnings(builder =>
+        {
+            builder.Log(RelationalEventId.PendingModelChangesWarning);
+        });
+    }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AuthState>(entity =>
@@ -36,6 +46,8 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("users");
+
+            entity.Property(u => u.Permissions).HasDefaultValue(new List<string>());
         });
 
         modelBuilder.Entity<Pool>(entity =>
@@ -96,6 +108,32 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
         modelBuilder.Entity<UserFlair>(entity =>
         {
             entity.ToTable("user_flairs");
+        });
+
+        modelBuilder.Entity<User>().HasData(new User
+        {
+            Guid = "00000000-0000-0000-0000-000000000000",
+            Username = "Béla",
+            AvatarUrl = "https://cdn.beatkhana.com/view/d8d943968d33a36b00841583ec404c46.jpg",
+            Banned = false,
+            BeatKhanaId = "bd4e7d4a-dcf0-484c-a065-bbccc78a064b",
+            PlatformId = "76561199003743737",
+            Created = DateTimeOffset.UtcNow,
+            Updated = DateTimeOffset.UtcNow,
+            Permissions = ["role:admin", "role:dev", "role:moderator", "role:pooler"],
+            Flairs = []
+        }, new User
+        {
+            Guid = "00000000-0000-0000-0000-000000000001",
+            Username = "ShyyLuna",
+            AvatarUrl = "https://cdn.beatkhana.com/view/b4fce8548f05e9b07dc376cb06b70aed.webp",
+            Banned = false,
+            BeatKhanaId = "583e1518-9651-4b0a-a568-67c6fae73128",
+            PlatformId = "76561199016011545",
+            Created = DateTimeOffset.UtcNow,
+            Updated = DateTimeOffset.UtcNow,
+            Permissions = ["role:dev", "role:moderator"],
+            Flairs = []
         });
     }
 }

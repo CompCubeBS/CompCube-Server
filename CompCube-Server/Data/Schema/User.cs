@@ -38,11 +38,11 @@ public class User
     public List<CompetetiveStatistics> CompetetiveStatistics { get; set; } = [];
     
     [Required]
-    public List<string> Permissions { get; set; } = [];
+    public required List<string> Permissions { get; set; } = [];
     
     [Required]
-    public DateTime Created { get; set; }
+    public required DateTimeOffset Created { get; set; }
     
     [Required]
-    public DateTime Updated { get; set; }
+    public required DateTimeOffset Updated { get; set; }
 }

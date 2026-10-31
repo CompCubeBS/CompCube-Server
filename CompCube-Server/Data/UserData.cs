@@ -109,6 +109,9 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
                     Username = userName,
                     AvatarUrl = avatarUrl,
                     BeatKhanaId = beatKhanaGuid,
+                    Updated = DateTime.UtcNow,
+                    Created = DateTime.UtcNow,
+                    Permissions = []
                 };
                 
                 context.Users.Add(user);
@@ -160,6 +163,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
                     Banned = false,
                     Created = DateTime.UtcNow,
                     Updated = DateTime.UtcNow,
+                    Permissions = []
                 });
 
                 user = context.Users.Include(p => p.CompetetiveStatistics).First(p => p.PlatformId == platformId);
@@ -352,6 +356,9 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         var context = scope.ServiceProvider.GetService<DataContext>()!;
         
         var user = context.Users.Include(user => user.Flairs).FirstOrDefault(i => i.PlatformId == platformId);
+
+        if (user == null)
+            return null;
 
         return GetUserInfoFromUserModel(user);
     }
