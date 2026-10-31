@@ -1,9 +1,11 @@
 ﻿using System.Buffers.Text;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using CompCube_Server.Config;
 using CompCube_Server.Models.CompCube_Models.Models.Auth.BeatKhana;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -71,7 +73,7 @@ public class BeatKhanaService(ConfigHelper config, ILogger<BeatKhanaService> log
         _publicKey.ImportFromPem(responseJson["publicKey"]?.Value<string>());
     }
 
-    public async Task<TokenClaims> VerifyAccessToken(string accessToken)
+    public async Task<ClaimsPrincipal> VerifyAccessToken(string accessToken)
     {
         if (_publicKey == null)
             await Initialize();
@@ -131,7 +133,25 @@ public class BeatKhanaService(ConfigHelper config, ILogger<BeatKhanaService> log
                 .ToArray()
             : (platformId != null ? new[] { platformId } : Array.Empty<string>());
 
-        return new TokenClaims(
+        var userClaims = new Claim[]
+        {
+            new Claim("guid", guid ?? string.Empty),
+            new Claim("id", discordId ?? string.Empty),
+            new Claim("discordId", discordId ?? string.Empty),
+            new Claim("username", (claims["username"]?.Value<string>()!).Trim()),
+            new Claim("avatarUrl", claims["avatarUrl"]?.Value<string>() ?? string.Empty),
+            new Claim("global_name", claims["global_name"]?.Value<string>() ?? string.Empty),
+            new Claim("platform", claims["platform"]?.Value<string>() ?? string.Empty),
+            new Claim("platformId", platformId!),
+        };
+        
+        var identity = new ClaimsIdentity(userClaims, "BeatKhanaTokenScheme");
+        
+        var principal = new ClaimsPrincipal(identity);
+        
+        return principal;
+
+        /*return new Claim(
             guid,
             id: discordId,
             discordId,
@@ -146,7 +166,7 @@ public class BeatKhanaService(ConfigHelper config, ILogger<BeatKhanaService> log
             null,
             iat,
             exp,
-            nbf);
+            nbf);*/
     }
     
     //i dont care anymore who gaf

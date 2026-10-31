@@ -49,7 +49,7 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [Authorize(Policy = "RequireMapPooler")]
+    [Authorize(Policy = "RequireAdmin")]
     public IActionResult AddMap( 
         string hash, 
         string difficulty, 

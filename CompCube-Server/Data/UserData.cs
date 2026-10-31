@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CompCube_Models.Models.ClientData;
 using CompCube_Server.Config;
 using CompCube_Server.Data.Schema;
@@ -80,15 +81,21 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         }).ToList();
     }
 
-    public UserInfo UpsertFromBeatKhanaToken(TokenClaims claims, string linkingUrl)
+    public UserInfo UpsertFromBeatKhanaToken(ClaimsPrincipal claims, string linkingUrl)
     {
-        if (claims.Guid != null)
-            return UpsertFromBeatKhana(claims.PlatformId!, claims.Guid, claims.GlobalName ?? claims.Username, claims.AvatarUrl!, linkingUrl);
+        var platformId = claims.Claims.First(c => c.Type == "platformId").Value;
+        var guid = claims.Claims.First(c => c.Type == "guid").Value;
+        var globalName = claims.Claims.First(c => c.Type == "global_name").Value;
+        var username = claims.Claims.First(c => c.Type == "username").Value;
+        var avatarUrl = claims.Claims.First(c => c.Type == "avatarUrl").Value;
+        
+        if (claims.Claims.FirstOrDefault(i => i.Type == "guid" && i.Value != "") != null)
+            return UpsertFromBeatKhana(platformId!, guid, globalName == "" ? username : globalName, avatarUrl, linkingUrl);
 
-        if (claims.PlatformId == null)
+        if (platformId == "")
             throw new Exception("Token has no usable identity!");
         
-        return UpsertPluginAccount(claims.PlatformId, claims.Username);
+        return UpsertPluginAccount(platformId, username);
     }
 
     public UserInfo UpsertFromBeatKhana(string platformId, string beatKhanaGuid, string userName, string avatarUrl, string linkingUrl)

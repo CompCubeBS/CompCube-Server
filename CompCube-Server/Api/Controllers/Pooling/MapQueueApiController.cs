@@ -12,7 +12,7 @@ public class MapQueueApiController(ConfigHelper helper, BeatmapPoolData beatmapP
 {
     [HttpGet("/api/queue/qualified")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [Authorize(Policy = "RequireMapPooler")]
+    [Authorize(Policy = "RequirePooler")]
     public ActionResult<VotingMap[]> GetQualifiedMaps()
     {
         return beatmapPoolData.GetQualifiedMaps();
@@ -20,7 +20,7 @@ public class MapQueueApiController(ConfigHelper helper, BeatmapPoolData beatmapP
 
     [HttpPost("/api/maps/assignBatch")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [Authorize(Policy = "RequireMapPooler")]
+    [Authorize(Policy = "RequirePooler")]
     public IActionResult AssignBatch(string guid, int batchNum)
     {
         var map = beatmapPoolData.GetBeatmapByGuid(guid);
