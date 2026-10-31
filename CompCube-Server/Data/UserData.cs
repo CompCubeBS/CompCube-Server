@@ -395,10 +395,10 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         return context.CompetitiveStatistics.Where(i => i.Season == season).Count(i => i.Elo > elo) + 1;
     }
 
-    private Flair[] GetFlairsFromModel(List<UserFlair> flair)
+    private static Flair[] GetFlairsFromModel(List<UserFlair> flair)
     {
         return flair.Select(i => new Flair(i.Name, i.Color, i.Permissions.ToArray())).ToArray();
     }
 
-    private UserInfo GetUserInfoFromUserModel(User user) => new(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl, GetFlairsFromModel(user.Flairs), user.Banned);
+    private static UserInfo GetUserInfoFromUserModel(User user) => new(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl, GetFlairsFromModel(user.Flairs), user.Banned);
 }

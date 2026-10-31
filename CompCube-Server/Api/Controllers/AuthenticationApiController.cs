@@ -32,6 +32,8 @@ public class AuthenticationApiController(
             Random.NextBytes(bytes);
 
             var state = WebEncoders.Base64UrlEncode(bytes);
+            
+            logger.LogInformation("state {state}", state);
 
             returnTo = returnTo.StartsWith('/') &&
                        !returnTo.StartsWith("//")
@@ -56,6 +58,8 @@ public class AuthenticationApiController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Callback(string code, string state)
     {
+        logger.LogInformation("state {state}", state);
+        
         var saved = authData.ConsumeOAuthState(state);
             
         if (saved == null)
@@ -66,6 +70,8 @@ public class AuthenticationApiController(
             var token = await beatKhanaService.ExchangeCode(code);
             var claims = await beatKhanaService.VerifyAccessToken(token.AccessToken);
             var account = userData.UpsertFromBeatKhanaToken(claims, config.BeatKhanaLinkingUrl);
+            
+            logger.LogInformation(token.AccessToken);
 
             if (saved.ResponseMode == AuthState.ResponseModeType.Json)
                 return Ok(new

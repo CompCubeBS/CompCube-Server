@@ -39,7 +39,9 @@ public class BeatKhanaService(ConfigHelper config, ILogger<BeatKhanaService> log
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"{config.BeatKhanaApiUrl}/oauth/token");
         request.Headers.Add("Authorization", $"Basic {basic}");
-        request.Headers.Add("content-type", "application/x-www-form-urlencoded");
+        
+        // fuck
+        request.Content = new StringContent("{\"content-type\", \"application/x-www-form-urlencoded\"}");
 
         var content = new Dictionary<string, string>()
         {
