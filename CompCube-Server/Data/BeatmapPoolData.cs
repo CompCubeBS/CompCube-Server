@@ -72,7 +72,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
             if (pool == null)
                 return;
 
-            map.Pools.Add(pool);
+            pool.Maps.Add(map);
             
             context.SaveChanges();
         }
