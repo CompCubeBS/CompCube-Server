@@ -17,7 +17,7 @@ public class AuthenticationApiController(
     UserData userData,
     ConfigHelper config) : ControllerBase
 {
-    private static readonly Random Random = new Random();
+    private static readonly Random Random = new();
     
     [Route("/oauth/login")]
     [HttpGet]
@@ -57,7 +57,7 @@ public class AuthenticationApiController(
     public async Task<IActionResult> Callback(string code, string state)
     {
         var saved = authData.ConsumeOAuthState(state);
-            
+        
         if (saved == null)
             return BadRequest("INVALID_STATE");
 

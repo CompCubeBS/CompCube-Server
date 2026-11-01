@@ -1,20 +1,23 @@
-﻿using CompCube_Server.Models.CompCube_Models.Models.Contributors;
+﻿using CompCube_Models.Models.ClientData;
+using CompCube_Server.Data;
+using CompCube_Server.Models.CompCube_Models.Models.Contributors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompCube_Server.Api.Controllers;
 
 [ApiController]
-public class ContributorsApiController(IConfiguration config) : ControllerBase
+public class ContributorsApiController(UserData userData) : ControllerBase
 {
     [HttpGet("api/contributors")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<Contributor[]> GetContributors()
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public ActionResult<UserInfo[]> GetContributors(string permissionFilter)
     {
-        var contributors = config.GetSection("Contributors").Get<Contributor[]>();
+        var users = userData.GetUserInfoByPermission(permissionFilter);
+        
+        if (users.Length == 0)
+            return NotFound();
 
-        if (contributors == null)
-            throw new Exception("Could not parse contributors from file!");
-
-        return contributors;
+        return users;
     }
 }

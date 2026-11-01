@@ -38,11 +38,13 @@ public class AuthData(IServiceScopeFactory scopeService, ILogger<AuthData> logge
     {
         using var scope = scopeService.CreateScope();
         var context = scope.ServiceProvider.GetService<DataContext>()!;
+
+        var hashedState = Hash(state);
         
         var authState = context.AuthStates
             .Where(i => i.ConsumedAt == null)
-            .Where(i => i.ExpiresAt < DateTime.UtcNow)
-            .FirstOrDefault(i => i.StateHash == Hash(state));
+            .Where(i => i.ExpiresAt > DateTime.UtcNow)
+            .FirstOrDefault(i => i.StateHash == hashedState);
 
         if (authState == null)
             return null;

@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <PackageReference Include="BeatSaverSharper" Version="3.4.5" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.14" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.15"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />

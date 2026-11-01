@@ -1,21 +1,21 @@
 using CompCube_Server.Api.BeatSaver;
-using CompCube_Server.Api.Controllers;
+using CompCube_Server.Api.Controllers.Middleware;
 using CompCube_Server.Config;
 using CompCube_Server.Data;
 using CompCube_Server.Discord;
-using CompCube_Server.Discord.MapPooling;
 using CompCube_Server.Discord.MapPooling.Voting;
 using CompCube_Server.Gameplay.Match;
 using CompCube_Server.Gameplay.Matchmaking;
 using CompCube_Server.Interfaces;
 using CompCube_Server.Networking.ServerStatus;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using NetCord;
 using NetCord.Gateway;
 using NetCord.Hosting.Gateway;
 using NetCord.Hosting.Services;
 using NetCord.Hosting.Services.ApplicationCommands;
-using NetCord.Hosting.Services.Commands;
 using NetCord.Hosting.Services.ComponentInteractions;
 using NetCord.Services.ComponentInteractions;
 
@@ -47,6 +47,33 @@ public class Program
         if (_useDiscordIntegration)
             builder.Services.AddDiscordGateway(options => options.Intents = GatewayIntents.All).AddApplicationCommands().AddComponentInteractions<ButtonInteraction, ButtonInteractionContext>().AddComponentInteractions<ModalInteraction, ModalInteractionContext>().AddGatewayHandlers(typeof(Program).Assembly);
 
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = "BeatKhanaTokenScheme";
+            options.DefaultChallengeScheme = "BeatKhanaTokenScheme";
+        }).AddScheme<AuthenticationSchemeOptions, TokenHandler>("BeatKhanaTokenScheme",
+            options =>
+            {
+            });
+        
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("RequirePooler", policy =>
+            {
+                policy.Requirements.Add(new PermissionCheck("role:pooler"));
+            })
+            .AddPolicy("RequireModerator", policy =>
+            {
+                policy.Requirements.Add(new PermissionCheck("role:moderator"));
+            })
+            .AddPolicy("RequireDev", policy =>
+            {
+                policy.Requirements.Add(new PermissionCheck("role:dev"));
+            })
+            .AddPolicy("RequireAdmin", policy =>
+            {
+                policy.Requirements.Add(new PermissionCheck("role:admin"));
+            });
+        
         builder.Services.AddControllers().AddNewtonsoftJson();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
@@ -74,9 +101,12 @@ public class Program
         });
         
         var host = builder.Build();
-            
+        
         host.UseSwagger();
         host.UseSwaggerUI();
+
+        host.UseAuthentication();
+        host.UseAuthorization();
 
         // host.UseHttpsRedirection();
         host.MapControllers();
@@ -123,6 +153,8 @@ public class Program
 
         services.AddSingleton<BeatSaverService>();
         services.AddSingleton<BeatKhanaService>();
+        
+        services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
 
         if (!_useDiscordIntegration) 
             return;

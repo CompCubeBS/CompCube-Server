@@ -28,9 +28,8 @@ public class User
     [Required]
     public bool Banned { get; set; } = false;
 
-    public string? FlairGuid { get; set; } = null;
-
-    public UserFlair? Flair { get; set; } = null;
+    [Required]
+    public List<UserFlair> Flairs { get; set; } = [];
     
     [Required]
     public List<Score> Scores { get; set; } = [];
@@ -39,8 +38,11 @@ public class User
     public List<CompetetiveStatistics> CompetetiveStatistics { get; set; } = [];
     
     [Required]
-    public DateTime Created { get; set; }
+    public required List<string> Permissions { get; set; } = [];
     
     [Required]
-    public DateTime Updated { get; set; }
+    public required DateTimeOffset Created { get; set; }
+    
+    [Required]
+    public required DateTimeOffset Updated { get; set; }
 }
