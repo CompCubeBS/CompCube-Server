@@ -28,6 +28,8 @@ public class UserFlairData(IServiceScopeFactory scopeFactory)
         };
         
         dataContext.UserFlairs.Add(flair);
+        
+        dataContext.SaveChanges();
 
         return ConvertToFlairFromUserFlair(flair);
     }
@@ -43,6 +45,8 @@ public class UserFlairData(IServiceScopeFactory scopeFactory)
             return false;
         
         dataContext.UserFlairs.Remove(flair);
+        
+        dataContext.SaveChanges();
 
         return true;
     }
@@ -65,6 +69,8 @@ public class UserFlairData(IServiceScopeFactory scopeFactory)
         
         if (permissions != null)
             flair.Permissions = permissions.ToList();
+
+        dataContext.SaveChanges();
 
         return true;
     }
