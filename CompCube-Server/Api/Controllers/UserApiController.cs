@@ -8,10 +8,10 @@ namespace CompCube_Server.Api.Controllers;
 [ApiController]
 public class UserApiController(UserData userData) : ControllerBase
 {
-    [HttpGet("/api/user/id/{id}")]
+    [HttpGet("/api/user/id/{platformId}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<UserStatistics> GetUserById(string id)
+    public ActionResult<UserStatistics> GetUserByPlatformId(string id)
     {
         var user = userData.GetUserStatisticsByPlatformId(id);
         
@@ -21,27 +21,27 @@ public class UserApiController(UserData userData) : ControllerBase
         return user;
     }
 
-    [HttpPatch("/api/user/id/{id}/ban")]
+    [HttpPatch("/api/user/id/{platformId}/ban")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = "RequireModerator")]
-    public IActionResult BanUser(string id, bool banned = true)
+    public IActionResult BanUser(string platformId, bool banned = true)
     {
-        if (userData.SetBannedStatus(id, banned))
+        if (userData.SetBannedStatus(platformId, banned))
             return Ok();
 
         return NotFound();
     }
 
-    [HttpPatch("/api/user/id/{id}/flairs")]
+    [HttpPatch("/api/user/id/{platformId}/flairs")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = "RequireAdmin")]
-    public IActionResult SetFlairs(string id, string flairGuids)
+    public IActionResult SetFlairs(string platformId, string flairGuids)
     {
         var flairs = flairGuids.Split(',');
         
-        if (userData.SetFlairs(id, flairs))
+        if (userData.SetFlairs(platformId, flairs))
             return Ok();
         
         return NotFound();

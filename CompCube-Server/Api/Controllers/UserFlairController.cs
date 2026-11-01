@@ -36,6 +36,7 @@ public class UserFlairController(UserFlairData flairData) : ControllerBase
 
     [HttpDelete("/api/flair/delete")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult DeleteFlair(string guid)
     {
         if (flairData.DeleteFlair(guid))
