@@ -3,6 +3,7 @@ using CompCube_Server.Api.BeatSaver;
 using CompCube_Server.Config;
 using CompCube_Server.Data;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
 namespace CompCube_Server.Api.Controllers.Middleware;
@@ -19,6 +20,11 @@ public class TokenHandler(
 {
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
+        var endpoint = Context.GetEndpoint();
+        
+        if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() != null)
+            return AuthenticateResult.NoResult();
+        
         if (!Request.Headers.TryGetValue("Authorization", out var bearerToken))
             return AuthenticateResult.Fail("NO_TOKEN");
 

@@ -8,6 +8,20 @@ namespace CompCube_Server.Api.Controllers;
 [ApiController]
 public class UserApiController(UserData userData) : ControllerBase
 {
+    [HttpGet("api/user/@me")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public ActionResult<UserStatistics> GetSelf()
+    {
+        var self = User.Claims.FirstOrDefault(c => c.Type == "platformId")?.Value;
+
+        if (self == null)
+            return Unauthorized();
+
+        return GetUserByPlatformId(self);
+    }
+    
     [HttpGet("/api/user/id/{platformId}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]

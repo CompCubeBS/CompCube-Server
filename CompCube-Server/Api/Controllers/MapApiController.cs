@@ -13,10 +13,12 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
 {
     [HttpGet("/api/maps/hashes")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [AllowAnonymous]
     public ActionResult<string[]> GetAllMapHashes() => beatmapPoolData.GetAllMapsFromActiveBatches().Select(i => i.Hash).ToArray();
 
     [HttpGet("/api/maps/playlist")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [AllowAnonymous]
     public ActionResult<string> GetPlaylist()
     {
         var allMaps = beatmapPoolData.GetAllMapsFromActiveBatches();

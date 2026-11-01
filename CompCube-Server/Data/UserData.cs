@@ -362,7 +362,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         var context = scope.ServiceProvider.GetService<DataContext>()!;
         
         var flairs = context.UserFlairs.Where(i => flairGuids.Contains(i.Guid)).ToArray();
-
+        
         if (flairs.Length != flairGuids.Length)
             return false;
         

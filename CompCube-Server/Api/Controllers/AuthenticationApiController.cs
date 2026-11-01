@@ -4,6 +4,7 @@ using CompCube_Server.Api.BeatSaver;
 using CompCube_Server.Config;
 using CompCube_Server.Data;
 using CompCube_Server.Data.Schema;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 
@@ -23,6 +24,7 @@ public class AuthenticationApiController(
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status302Found)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    [AllowAnonymous]
     public IActionResult Login(string returnTo, string mode)
     {
         try
@@ -54,6 +56,7 @@ public class AuthenticationApiController(
     [HttpGet]
     [Route("/oauth/callback")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [AllowAnonymous]
     public async Task<IActionResult> Callback(string code, string state)
     {
         var saved = authData.ConsumeOAuthState(state);
@@ -74,6 +77,10 @@ public class AuthenticationApiController(
                 });
 
             var secure = config.BeatKhanaCallbackUrl.StartsWith("https://");
+            
+            // TODO: remove this
+            // this is bad. this is for debugging. dont keep this in.
+            logger.LogInformation(token.AccessToken);
 
             Response.Cookies.Append("cc_auth_token", token.AccessToken, new CookieOptions()
             {
