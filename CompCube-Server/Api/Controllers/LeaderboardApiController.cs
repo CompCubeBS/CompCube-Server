@@ -1,10 +1,12 @@
 ﻿using CompCube_Models.Models.ClientData;
 using CompCube_Server.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompCube_Server.Api.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 public class LeaderboardApiController(UserData userData) : ControllerBase
 {
     [HttpGet("api/leaderboard/range/")]

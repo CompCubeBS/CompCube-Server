@@ -136,6 +136,7 @@ public class Program
         services.AddSingleton<BeatmapPoolData>();
         services.AddSingleton<AuthData>();
         services.AddSingleton<BeatmapQueueData>();
+        services.AddSingleton<UserFlairData>();
         
         services.AddSingleton<ServerStatusManager>();
         

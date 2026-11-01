@@ -355,6 +355,44 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
                 stats.TotalGamesPlayed, stats.WinStreak, stats.BestWinStreak);
         }).ToList();
     }
+
+    public bool SetFlairs(string platformId, string[] flairGuids)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetService<DataContext>()!;
+        
+        var flairs = context.UserFlairs.Where(i => flairGuids.Contains(i.Guid)).ToArray();
+        
+        if (flairs.Length != flairGuids.Length)
+            return false;
+        
+        var user = context.Users.FirstOrDefault(i => i.PlatformId == platformId);
+
+        if (user == null)
+            return false;
+
+        user.Flairs = flairs.ToList();
+
+        context.SaveChanges();
+        return true;
+    }
+
+    public bool SetBannedStatus(string platformId, bool banned)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetService<DataContext>()!;
+        
+        var user = context.Users.FirstOrDefault(i => i.PlatformId == platformId);
+
+        if (user == null)
+            return false;
+        
+        user.Banned = banned;
+
+        context.SaveChanges();
+
+        return true;
+    }
     
     public UserInfo? GetUserInfoByPlatformId(string platformId)
     {
@@ -404,7 +442,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
     private static Flair[] GetFlairsFromModel(List<UserFlair> flair)
     {
-        return flair.Select(i => new Flair(i.Name, i.Color, i.Permissions.ToArray())).ToArray();
+        return flair.Select(i => new Flair(i.Guid, i.Name, i.Color, i.Permissions.ToArray())).ToArray();
     }
 
     private static UserInfo GetUserInfoFromUserModel(User user) => new(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl, GetFlairsFromModel(user.Flairs), user.Banned);
