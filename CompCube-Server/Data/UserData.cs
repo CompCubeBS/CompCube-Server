@@ -404,7 +404,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
     private static Flair[] GetFlairsFromModel(List<UserFlair> flair)
     {
-        return flair.Select(i => new Flair(i.Name, i.Color, i.Permissions.ToArray())).ToArray();
+        return flair.Select(i => new Flair(i.Guid, i.Name, i.Color, i.Permissions.ToArray())).ToArray();
     }
 
     private static UserInfo GetUserInfoFromUserModel(User user) => new(user.Username, user.PlatformId, user.BeatKhanaId, user.AvatarUrl, GetFlairsFromModel(user.Flairs), user.Banned);
