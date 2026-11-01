@@ -1,3 +1,3 @@
 [submodule "CompCube-Server/Models"]
 	path = CompCube-Server/Models
-	url = https://github.com/NotBela/CompCube-Models.git
+	url = https://github.com/CompCubeBS/CompCube-Models.git
