@@ -89,12 +89,12 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
             
             await Task.Delay(500);
 
+            _playerDisconnectionCts.Token.ThrowIfCancellationRequested();
+            
             await Task.WhenAll(
                 winner.SendMatchResults(eloChange, true),
                 loser.SendMatchResults(eloChange, false)
             );
-            
-            _playerDisconnectionCts.Token.ThrowIfCancellationRequested();
             
             ApplyEloChanges(winner, loser, eloChange);
             
