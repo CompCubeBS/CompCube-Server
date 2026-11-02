@@ -19,8 +19,6 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
     private MatchPlayer _blue;
 
     private int _roundCount = 0;
-    
-    private readonly CancellationTokenSource _playerDisconnectionCts = new();
 
     public float Multiplier
     {
@@ -55,66 +53,50 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
     public async Task StartMatchAsync()
     {
-        try
+        _red.ClientDidDisconnect += HandleClientDisconnected;
+        _blue.ClientDidDisconnect += HandleClientDisconnected;
+
+        await Task.WhenAll(
+            _red.StartAndWaitForDiscardPhaseToComplete(_blue.UserStatistics),
+            _blue.StartAndWaitForDiscardPhaseToComplete(_red.UserStatistics)
+        );
+
+        while (true)
         {
-            _red.ClientDidDisconnect += HandleClientDisconnected;
-            _blue.ClientDidDisconnect += HandleClientDisconnected;
-            
-            await Task.WhenAll(
-                _red.StartAndWaitForDiscardPhaseToComplete(_blue.UserStatistics),
-                _blue.StartAndWaitForDiscardPhaseToComplete(_red.UserStatistics)
-            );
+            await StartRound();
 
-            while (true)
-            {
-                await StartRound();
+            if (_red.AvailablePicks.Count <= 0 && _blue.AvailablePicks.Count <= 0)
+                break;
 
-                if (_red.AvailablePicks.Count <= 0 && _blue.AvailablePicks.Count <= 0)
-                    break;
-
-                if (_red.Health <= 0 || _blue.Health <= 0)
-                    break;
-                
-                _playerDisconnectionCts.Token.ThrowIfCancellationRequested();
-            }
-
-            var winner = _red;
-
-            if (_blue.Health > _red.Health)
-                winner = _blue;
-
-            var loser = GetOther(winner);
-
-            var eloChange = ComputeEloChange(winner.UserStatistics, loser.UserStatistics);
-            
-            await Task.Delay(500);
-
-            _playerDisconnectionCts.Token.ThrowIfCancellationRequested();
-            
-            await Task.WhenAll(
-                winner.SendMatchResults(eloChange, true),
-                loser.SendMatchResults(eloChange, false)
-            );
-            
-            ApplyEloChanges(winner, loser, eloChange);
-            
-            Dispose();
+            if (_red.Health <= 0 || _blue.Health <= 0)
+                break;
         }
-        catch (OperationCanceledException)
-        {
-            Dispose();
-        }
+
+        var winner = _red;
+
+        if (_blue.Health > _red.Health)
+            winner = _blue;
+
+        var loser = GetOther(winner);
+
+        var eloChange = ComputeEloChange(winner.UserStatistics, loser.UserStatistics);
+
+        await Task.Delay(500);
+
+        await Task.WhenAll(
+            winner.SendMatchResults(eloChange, true),
+            loser.SendMatchResults(eloChange, false)
+        );
+
+        ApplyEloChanges(winner, loser, eloChange);
+
+        Dispose();
     }
 
     private async void HandleClientDisconnected(MatchPlayer loser)
     {
         try
         {
-            loser.ClientDidDisconnect -= HandleClientDisconnected;
-            GetOther(loser).ClientDidDisconnect -= HandleClientDisconnected;
-
-            await _playerDisconnectionCts.CancelAsync();
-
             logger.LogInformation("Match forfeit: Player {player} disconnected early!", loser.UserStatistics.Username);
 
             var winner = GetOther(loser);
@@ -248,7 +230,8 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
     public void Dispose()
     {
-        _playerDisconnectionCts.Dispose();
+        _red.ClientDidDisconnect -= HandleClientDisconnected;
+        _blue.ClientDidDisconnect -= HandleClientDisconnected;
         
         _red.Dispose();
         _blue.Dispose();
