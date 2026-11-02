@@ -200,7 +200,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
     private void CreateNewCompetitiveStatisticsIfNotExists(User user, DataContext context)
     {
-        if (user.CompetetiveStatistics.Any(i => i.Season == configHelper.Season))
+        if (context.CompetitiveStatistics.Any(i => i.User.PlatformId == user.PlatformId && i.Season == configHelper.Season))
             return;
 
         context.CompetitiveStatistics.Add(new CompetetiveStatistics()
@@ -261,16 +261,13 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         {
             var user = context.Users
                 .Include(i => i.CompetetiveStatistics)
-                .FirstOrDefault(i => i.PlatformId == platformId);
-
-            if (user == null)
-                return;
+                .First(i => i.PlatformId == platformId);
             
             var stats = user.CompetetiveStatistics.First(i => i.Season == configHelper.Season);
 
             stats.Elo += eloChange;
+            
             context.SaveChanges();
-
         }
         catch (Exception e)
         {
