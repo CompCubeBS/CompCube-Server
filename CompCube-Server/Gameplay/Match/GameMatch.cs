@@ -202,7 +202,7 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
             
             await Task.WhenAll(
                 _red.SendRoundResults(redScore, blueScore, damage),
-                _blue.SendRoundResults(blueScore, blueScore, damage)
+                _blue.SendRoundResults(redScore, blueScore, damage)
             );
             
             await Task.Delay(new TimeSpan(0, 0, 10));
