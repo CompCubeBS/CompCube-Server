@@ -103,6 +103,8 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
             ApplyEloChanges(winner, loser, ComputeEloChange(winner.UserStatistics, loser.UserStatistics));
 
+            winner.ClientDidDisconnect -= HandleClientDisconnected;
+            
             await winner.DisconnectAbruptly("Player Forfeit");
             
             Dispose();
