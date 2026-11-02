@@ -133,9 +133,6 @@ public class MatchPlayer : IDisposable
 
     public async Task<Tuple<MatchPlayer, bool>> SendRoundResults(Score red, Score blue, float damageAmount)
     {
-        if ((red.Points > blue.Points && IsRed) || (blue.Points > red.Points && !IsRed))
-            return new Tuple<MatchPlayer, bool>(this, false);
-        
         var tcs = new TaskCompletionSource<bool>();
         
         _handleReplayRequestWrapper = HandleReplayRequest;
