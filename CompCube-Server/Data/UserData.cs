@@ -341,6 +341,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             .Include(p => p.Flairs)
             .Where(i => !i.Banned)
             .Where(i => i.CompetetiveStatistics.Any(j => j.Season == season))
+            .OrderBy(i => i.CompetetiveStatistics.First(j => j.Season == season).Elo)
             .ToArray();
 
         return users.Select(user =>
