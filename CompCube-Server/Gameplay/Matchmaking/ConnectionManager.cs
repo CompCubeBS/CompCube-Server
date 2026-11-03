@@ -51,7 +51,7 @@ public partial class ConnectionManager(
 
         var claims = await beatKhanaService.VerifyAccessToken(token);
 
-        var user = userData.UpsertFromBeatKhanaToken(claims, config.BeatKhanaLinkingUrl);
+        var user = userData.UpsertFromBeatKhanaToken(claims);
 
         var userId = user.PlatformId;
         var username = user.Username;

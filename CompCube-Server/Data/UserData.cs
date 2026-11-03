@@ -81,7 +81,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         }).ToList();
     }
 
-    public UserInfo UpsertFromBeatKhanaToken(ClaimsPrincipal claims, string linkingUrl)
+    public UserInfo UpsertFromBeatKhanaToken(ClaimsPrincipal claims)
     {
         var platformId = claims.Claims.First(c => c.Type == "platformId").Value;
         var guid = claims.Claims.First(c => c.Type == "guid").Value;
@@ -90,7 +90,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         var avatarUrl = claims.Claims.First(c => c.Type == "avatarUrl").Value;
         
         if (claims.Claims.FirstOrDefault(i => i.Type == "guid" && i.Value != "") != null)
-            return UpsertFromBeatKhana(platformId!, guid, globalName == "" ? username : globalName, avatarUrl, linkingUrl);
+            return UpsertFromBeatKhana(platformId!, guid, globalName == "" ? username : globalName, avatarUrl);
 
         if (platformId == "")
             throw new Exception("Token has no usable identity!");
@@ -98,7 +98,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         return UpsertPluginAccount(platformId, username);
     }
 
-    public UserInfo UpsertFromBeatKhana(string platformId, string beatKhanaGuid, string userName, string avatarUrl, string linkingUrl)
+    public UserInfo UpsertFromBeatKhana(string platformId, string beatKhanaGuid, string userName, string avatarUrl)
     {
         using var scope = scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetService<DataContext>()!;
