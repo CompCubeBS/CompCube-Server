@@ -60,7 +60,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             .Include(p => p.Flairs)
             .Where(p => p.CompetetiveStatistics.Any(i => i.Season == season))
             .Where(p => !p.Banned)
-            .OrderBy(p => p.CompetetiveStatistics.First(i => i.Season == season).Elo).ToArray();
+            .OrderByDescending(p => p.CompetetiveStatistics.First(i => i.Season == season).Elo).ToArray();
         
         var index = Array.FindIndex(users, u => u.PlatformId == platformId);
 
@@ -341,7 +341,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             .Include(p => p.Flairs)
             .Where(i => !i.Banned)
             .Where(i => i.CompetetiveStatistics.Any(j => j.Season == season))
-            .OrderBy(i => i.CompetetiveStatistics.First(j => j.Season == season).Elo)
+            .OrderByDescending(i => i.CompetetiveStatistics.First(j => j.Season == season).Elo)
             .ToArray();
 
         return users.Select(user =>
