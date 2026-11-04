@@ -68,7 +68,7 @@ public class AuthenticationApiController(
         {
             var token = await beatKhanaService.ExchangeCode(code);
             var claims = await beatKhanaService.VerifyAccessToken(token.AccessToken);
-            var account = userData.UpsertFromBeatKhanaToken(claims, config.BeatKhanaLinkingUrl);
+            var account = userData.UpsertFromBeatKhanaToken(claims);
 
             if (saved.ResponseMode == AuthState.ResponseModeType.Json)
                 return Ok(new

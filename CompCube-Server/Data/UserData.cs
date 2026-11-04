@@ -60,7 +60,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             .Include(p => p.Flairs)
             .Where(p => p.CompetetiveStatistics.Any(i => i.Season == season))
             .Where(p => !p.Banned)
-            .OrderBy(p => p.CompetetiveStatistics.First(i => i.Season == season).Elo).ToArray();
+            .OrderByDescending(p => p.CompetetiveStatistics.First(i => i.Season == season).Elo).ToArray();
         
         var index = Array.FindIndex(users, u => u.PlatformId == platformId);
 
@@ -81,7 +81,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         }).ToList();
     }
 
-    public UserInfo UpsertFromBeatKhanaToken(ClaimsPrincipal claims, string linkingUrl)
+    public UserInfo UpsertFromBeatKhanaToken(ClaimsPrincipal claims)
     {
         var platformId = claims.Claims.First(c => c.Type == "platformId").Value;
         var guid = claims.Claims.First(c => c.Type == "guid").Value;
@@ -90,7 +90,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         var avatarUrl = claims.Claims.First(c => c.Type == "avatarUrl").Value;
         
         if (claims.Claims.FirstOrDefault(i => i.Type == "guid" && i.Value != "") != null)
-            return UpsertFromBeatKhana(platformId!, guid, globalName == "" ? username : globalName, avatarUrl, linkingUrl);
+            return UpsertFromBeatKhana(platformId!, guid, globalName == "" ? username : globalName, avatarUrl);
 
         if (platformId == "")
             throw new Exception("Token has no usable identity!");
@@ -98,7 +98,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         return UpsertPluginAccount(platformId, username);
     }
 
-    public UserInfo UpsertFromBeatKhana(string platformId, string beatKhanaGuid, string userName, string avatarUrl, string linkingUrl)
+    public UserInfo UpsertFromBeatKhana(string platformId, string beatKhanaGuid, string userName, string avatarUrl)
     {
         using var scope = scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetService<DataContext>()!;
@@ -341,6 +341,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             .Include(p => p.Flairs)
             .Where(i => !i.Banned)
             .Where(i => i.CompetetiveStatistics.Any(j => j.Season == season))
+            .OrderByDescending(i => i.CompetetiveStatistics.First(j => j.Season == season).Elo)
             .ToArray();
 
         return users.Select(user =>

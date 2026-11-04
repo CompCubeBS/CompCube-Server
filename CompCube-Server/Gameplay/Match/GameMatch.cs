@@ -11,7 +11,7 @@ using CompCube_Server.Models.CompCube_Models.Models.Packets.UserPackets;
 
 namespace CompCube_Server.Gameplay.Match;
 
-public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolData, UserData userData) : IDisposable
+public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolData, UserData userData, TimeoutManager timeoutManager) : IDisposable
 {
     private MatchSettings _matchSettings;
     
@@ -107,6 +107,9 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
             ApplyEloChanges(winner, loser, ComputeEloChange(winner.UserStatistics, loser.UserStatistics));
 
+            if (_matchSettings.Competitive)
+                timeoutManager.TimeoutUser(loser.UserStatistics.PlatformId);
+            
             winner.ClientDidDisconnect -= HandleClientDisconnected;
             
             await winner.DisconnectAbruptly("Player Forfeit");
