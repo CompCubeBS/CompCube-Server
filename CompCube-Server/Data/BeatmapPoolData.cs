@@ -1,19 +1,35 @@
 ﻿using CompCube_Models.Models.Map;
-using CompCube_Server.Config;
 using CompCube_Server.Data.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompCube_Server.Data;
 
-public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapPoolData> logger, ConfigHelper helper)
+public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapPoolData> logger)
 {
-    public List<VotingMap> GetAllMapsFromActiveBatches()
+    public bool SetPoolActiveState(int id, bool active)
+    {
+        using var scope = scopeFactory.CreateScope();
+        using var context = scope.ServiceProvider.GetService<DataContext>()!;
+        
+        var pool = context.Pools.SingleOrDefault(i => i.Id == id);
+
+        if (pool == null)
+            return false;
+        
+        pool.Active = active;
+        
+        context.SaveChanges();
+
+        return true;
+    }
+    
+    public List<VotingMap> GetAllMapsFromActivePools()
     {
         using var scope = scopeFactory.CreateScope();
 
         var context = scope.ServiceProvider.GetService<DataContext>()!;
         
-        var pools = context.Pools.Include(p => p.Maps).Where(i => helper.ActivePools.AsEnumerable().Contains(i.Id));
+        var pools = context.Pools.Include(p => p.Maps).Where(i => i.Active);
         
         var maps = new List<VotingMap>();
 
@@ -52,7 +68,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
             .ToArray();
     }
     
-    public void AssignBatch(string guid, int batch)
+    public void AssignPoolToMap(string guid, int poolNum)
     {
         using var scope = scopeFactory.CreateScope();
 
@@ -67,7 +83,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
             if (map == null)
                 return;
 
-            var pool = context.Pools.FirstOrDefault(i => i.Id == batch);
+            var pool = context.Pools.FirstOrDefault(i => i.Id == poolNum);
 
             if (pool == null)
                 return;
@@ -78,7 +94,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         }
         catch (Exception e)
         {
-            logger.LogError(e, $"Failed to assign map {guid} to batch {batch}");
+            logger.LogError(e, $"Failed to assign map {guid} to pool {poolNum}");
             throw;
         }
     }

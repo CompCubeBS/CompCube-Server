@@ -9,4 +9,6 @@ public class Pool
 
     [Required]
     public List<Beatmap> Maps { get; set; } = [];
+
+    [Required] public bool Active { get; set; } = false;
 }

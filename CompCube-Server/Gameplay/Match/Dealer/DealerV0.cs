@@ -12,7 +12,7 @@ public class DealerV0(BeatmapPoolData beatmapPoolData) : IDealer
     
     public VotingMap[] PullNewCards(int count)
     {
-        var maps = beatmapPoolData.GetAllMapsFromActiveBatches().Where(i => !_discardedOrAlreadyPulled.Contains(i));
+        var maps = beatmapPoolData.GetAllMapsFromActivePools().Where(i => !_discardedOrAlreadyPulled.Contains(i));
 
         var shuffled = maps.OrderBy(_ => Random.Next()).ToList();
 

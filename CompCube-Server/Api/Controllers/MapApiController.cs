@@ -1,6 +1,4 @@
 ﻿using CompCube_Models.Models.Map;
-using CompCube_Server.Api.BeatSaver;
-using CompCube_Server.Config;
 using CompCube_Server.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,19 +7,19 @@ using Newtonsoft.Json.Linq;
 namespace CompCube_Server.Api.Controllers;
 
 [ApiController]
-public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService beatSaver, ConfigHelper config) : ControllerBase
+public class MapApiController(BeatmapPoolData beatmapPoolData) : ControllerBase
 {
     [HttpGet("/api/maps/hashes")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [AllowAnonymous]
-    public ActionResult<string[]> GetAllMapHashes() => beatmapPoolData.GetAllMapsFromActiveBatches().Select(i => i.Hash).ToArray();
+    public ActionResult<string[]> GetAllMapHashes() => beatmapPoolData.GetAllMapsFromActivePools().Select(i => i.Hash).ToArray();
 
     [HttpGet("/api/maps/playlist")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [AllowAnonymous]
     public ActionResult<string> GetPlaylist()
     {
-        var allMaps = beatmapPoolData.GetAllMapsFromActiveBatches();
+        var allMaps = beatmapPoolData.GetAllMapsFromActivePools();
 
         var songs = new List<PlaylistSong>();
 

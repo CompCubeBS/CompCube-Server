@@ -24,10 +24,6 @@ public class ConfigHelper(IConfiguration config)
     public string BeatKhanaLinkingUrl => config.GetSection("BeatKhana").GetValue<string>("LinkingUrl") ?? throw new Exception("Could not get BeatKhana LinkingUrl from config!");
     public int Season => config.GetSection("Gameplay").GetValue("Season", 0);
     
-    public int[] ActivePools => config.GetSection("Maps").GetSection("ActivePools").Get<int[]>() ?? throw new Exception("ActivePools not present in appsettings.json!");
-
-    public string Secret => config.GetSection("Api").GetValue<string>("Secret")!;
-    
     public bool WhitelistEnabled => config.GetSection("Whitelist").GetValue("Enabled", false);
     
     public string[] WhitelistedIds => config.GetSection("Whitelist").GetSection("AllowedIds").Get<string[]>() ?? [];
