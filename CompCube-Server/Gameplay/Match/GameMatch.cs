@@ -53,44 +53,48 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
     public async Task StartMatchAsync()
     {
-        _red.ClientDidDisconnect += HandleClientDisconnected;
-        _blue.ClientDidDisconnect += HandleClientDisconnected;
-
-        await Task.WhenAll(
-            _red.StartAndWaitForDiscardPhaseToComplete(_blue.UserStatistics),
-            _blue.StartAndWaitForDiscardPhaseToComplete(_red.UserStatistics)
-        );
-
-        while (true)
+        try
         {
-            await StartRound();
+            _red.ClientDidDisconnect += HandleClientDisconnected;
+            _blue.ClientDidDisconnect += HandleClientDisconnected;
 
-            if (_red.AvailablePicks.Count <= 0 && _blue.AvailablePicks.Count <= 0)
-                break;
+            await Task.WhenAll(
+                _red.StartAndWaitForDiscardPhaseToComplete(_blue.UserStatistics),
+                _blue.StartAndWaitForDiscardPhaseToComplete(_red.UserStatistics)
+            );
 
-            if (_red.Health <= 0 || _blue.Health <= 0)
-                break;
+            while (true)
+            {
+                await StartRound();
+
+                if (_red.AvailablePicks.Count <= 0 && _blue.AvailablePicks.Count <= 0)
+                    break;
+
+                if (_red.Health <= 0 || _blue.Health <= 0)
+                    break;
+            }
+
+            var winner = _red;
+
+            if (_blue.Health > _red.Health)
+                winner = _blue;
+
+            var loser = GetOther(winner);
+
+            var eloChange = ComputeEloChange(winner.UserStatistics, loser.UserStatistics);
+
+            await Task.Delay(500);
+
+            await Task.WhenAll(
+                winner.SendMatchResults(eloChange, true),
+                loser.SendMatchResults(eloChange, false)
+            );
+
+            ApplyEloChanges(winner, loser, eloChange);
+
+            Dispose();
         }
-
-        var winner = _red;
-
-        if (_blue.Health > _red.Health)
-            winner = _blue;
-
-        var loser = GetOther(winner);
-
-        var eloChange = ComputeEloChange(winner.UserStatistics, loser.UserStatistics);
-
-        await Task.Delay(500);
-
-        await Task.WhenAll(
-            winner.SendMatchResults(eloChange, true),
-            loser.SendMatchResults(eloChange, false)
-        );
-
-        ApplyEloChanges(winner, loser, eloChange);
-
-        Dispose();
+        catch (OperationCanceledException){}
     }
 
     private async void HandleClientDisconnected(MatchPlayer loser)

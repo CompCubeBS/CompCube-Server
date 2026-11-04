@@ -93,7 +93,7 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
             return;
         _isDisconnected = true;
         
-        OnDisconnected?.Invoke(this);
+        await _cancellationTokenSource.CancelAsync();
 
         try
         {
@@ -116,6 +116,8 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
         {
             _socketFinishedTcs.SetResult();
             _client.Dispose();
+            
+            OnDisconnected?.Invoke(this);
         }
     }
 
@@ -158,9 +160,6 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
         {
             await _client.SendAsync(new ArraySegment<byte>(packet.SerializeToBytes()), WebSocketMessageType.Text, true,
                 _cancellationTokenSource.Token);
-        }
-        catch (OperationCanceledException)
-        {
         }
         catch (WebSocketException)
         {
