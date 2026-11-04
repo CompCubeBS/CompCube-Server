@@ -1,14 +1,21 @@
 using System.Security.Claims;
 using CompCube_Models.Models.ClientData;
+using CompCube_Server.Config;
 using CompCube_Server.Data;
 using Microsoft.AspNetCore.Authorization;
 
 namespace CompCube_Server.Api.Controllers.Middleware;
 
-public class PermissionHandler(UserData userData, ILogger<PermissionHandler> logger) : AuthorizationHandler<PermissionCheck>
+public class PermissionHandler(UserData userData, ILogger<PermissionHandler> logger, ConfigHelper config) : AuthorizationHandler<PermissionCheck>
 {
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionCheck requirement)
     {
+        if (config.SkipAuthorization)
+        {
+            context.Succeed(requirement);
+            return Task.CompletedTask;
+        }
+        
         if (context.User.Identity is not { IsAuthenticated: true })
         {
             context.Fail(new AuthorizationFailureReason(this, "NOT_AUTHENTICATED"));

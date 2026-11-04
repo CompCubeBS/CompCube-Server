@@ -1,9 +1,16 @@
-﻿namespace CompCube_Server.Config;
+﻿using System.Security.Claims;
+
+namespace CompCube_Server.Config;
 
 public class ConfigHelper(IConfiguration config)
 {
     public bool SkipAuthentication => config.GetSection("Auth").GetValue("SkipAuthentication", false);
     public bool SkipAuthorization => config.GetSection("Auth").GetValue("SkipAuthorization", false);
+
+    public Claim[] DebugAuthenticatedUserClaims =>
+        config.GetSection("Auth")
+            .GetSection("DebugAuthenticatedUserClaims")
+            .AsEnumerable().Select(i => new Claim(i.Key, i.Value ?? "")).ToArray();
     
     public string BeatKhanaAuthorizationUrl => config.GetSection("BeatKhana").GetValue<string>("AuthorizationUrl") ?? throw new Exception("Could not get BeatKhana Authorization URL from config!");
     

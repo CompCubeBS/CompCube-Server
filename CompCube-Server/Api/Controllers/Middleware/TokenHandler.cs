@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.Encodings.Web;
 using CompCube_Server.Api.BeatSaver;
 using CompCube_Server.Config;
@@ -13,13 +14,21 @@ public class TokenHandler(
     ILoggerFactory loggerFactory,
     UrlEncoder encoder,
     BeatKhanaService beatKhanaService,
-    UserData userData,
     ConfigHelper configHelper,
     ILogger<TokenHandler> logger)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, loggerFactory, encoder)
 {
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
+        if (configHelper.SkipAuthentication)
+        {
+            var identity = new ClaimsIdentity(configHelper.DebugAuthenticatedUserClaims, Scheme.Name);
+            
+            return AuthenticateResult.Success(
+                new AuthenticationTicket(
+                    new ClaimsPrincipal(identity), Scheme.Name));
+        }
+        
         var endpoint = Context.GetEndpoint();
         
         if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() != null)
