@@ -27,7 +27,7 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
             if (_roundCount <= 2)
                 return 1f;
 
-            return _roundCount * 1.5f;
+            return _roundCount - 2 * 1.25f;
         }
     }
     
