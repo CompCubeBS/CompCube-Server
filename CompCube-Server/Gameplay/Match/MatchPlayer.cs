@@ -10,7 +10,7 @@ namespace CompCube_Server.Gameplay.Match;
 
 public class MatchPlayer : IDisposable
 {
-    public UserStatistics UserStatistics => _client.UserStatistics;
+    public UserProfile UserProfile => _client.UserProfile;
 
     public float Health { get; private set; } = 1f;
 
@@ -45,10 +45,10 @@ public class MatchPlayer : IDisposable
     
     private Action<DiscardMapsPacket, IConnectedClient>? _handleDiscardMapsWrapper;
 
-    public async Task StartAndWaitForDiscardPhaseToComplete(UserStatistics opponent)
+    public async Task StartAndWaitForDiscardPhaseToComplete(UserProfile opponent)
     {
-        var red = IsRed ? UserStatistics : opponent;
-        var blue = !IsRed ? UserStatistics : opponent;
+        var red = IsRed ? UserProfile : opponent;
+        var blue = !IsRed ? UserProfile : opponent;
         
         var tcs = new TaskCompletionSource();
         
@@ -107,7 +107,7 @@ public class MatchPlayer : IDisposable
 
     private Action<ScoreSubmissionPacket, IConnectedClient>? _handleScoreSubmissionWrapper;
 
-    public async Task<Tuple<MatchPlayer, Score>> PlayMap(VotingMap map, UserStatistics? opponentWhoRequestedReplayIfApplies = null)
+    public async Task<Tuple<MatchPlayer, Score>> PlayMap(VotingMap map, UserProfile? opponentWhoRequestedReplayIfApplies = null)
     {
         var tcs = new TaskCompletionSource<Score>();
         
@@ -163,7 +163,7 @@ public class MatchPlayer : IDisposable
         }
     }
 
-    public async Task<Tuple<MatchPlayer, Score>> ReplayMap(VotingMap map, UserStatistics? opponentWhoRequestedReplayIfApplies)
+    public async Task<Tuple<MatchPlayer, Score>> ReplayMap(VotingMap map, UserProfile? opponentWhoRequestedReplayIfApplies)
     {
         return await PlayMap(map, opponentWhoRequestedReplayIfApplies);
     }

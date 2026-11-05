@@ -22,7 +22,7 @@ public class PermissionHandler(UserData userData, ILogger<PermissionHandler> log
             return Task.CompletedTask;
         }
         
-        var user = userData.GetUserInfoByPlatformId(context.User.Claims.FirstOrDefault(c => c.Type == "platformId")?.Value!);
+        var user = userData.GetFullUserProfileByPlatformId(context.User.Claims.FirstOrDefault(c => c.Type == "platformId")?.Value!);
         
         if (user == null)
         {

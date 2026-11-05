@@ -63,8 +63,8 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
             _blue.ClientDidDisconnect += HandleClientDisconnected;
 
             await Task.WhenAll(
-                _red.StartAndWaitForDiscardPhaseToComplete(_blue.UserStatistics),
-                _blue.StartAndWaitForDiscardPhaseToComplete(_red.UserStatistics)
+                _red.StartAndWaitForDiscardPhaseToComplete(_blue.UserProfile),
+                _blue.StartAndWaitForDiscardPhaseToComplete(_red.UserProfile)
             );
 
             while (true)
@@ -103,14 +103,14 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
     {
         try
         {
-            logger.LogInformation("Match forfeit: Player {player} disconnected early!", loser.UserStatistics.Username);
+            logger.LogInformation("Match forfeit: Player {player} disconnected early!", loser.UserProfile.Username);
 
             var winner = GetOther(loser);
 
             _matchEloSubmissionController.SubmitEloForMatch(winner, loser);
 
             if (_matchSettings.Competitive)
-                timeoutManager.TimeoutUser(loser.UserStatistics.PlatformId);
+                timeoutManager.TimeoutUser(loser.UserProfile.PlatformId);
             
             winner.ClientDidDisconnect -= HandleClientDisconnected;
             
@@ -160,7 +160,7 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
         if (replayRequestResults.Any(i => i.Item2))
         {
-            var replayRequester = replayRequestResults.First(i => i.Item2).Item1.UserStatistics;
+            var replayRequester = replayRequestResults.First(i => i.Item2).Item1.UserProfile;
             
             var newScores = await Task.WhenAll(
                 _red.ReplayMap(map!, replayRequester),
@@ -229,7 +229,7 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
         public int SubmitEloForMatch(MatchPlayer winner, MatchPlayer loser)
         {
-            var eloChange = ComputeEloChange(winner.UserStatistics, loser.UserStatistics);
+            var eloChange = ComputeEloChange(winner.UserProfile, loser.UserProfile);
             
             if (_wasSubmitted)
                 return eloChange;
@@ -246,17 +246,17 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
             if (!settings.Competitive)
                 return;
         
-            userData.AdjustElo(winner.UserStatistics.PlatformId, eloChange);
-            userData.AdjustElo(loser.UserStatistics.PlatformId, -eloChange);
+            userData.AdjustElo(winner.UserProfile.PlatformId, eloChange);
+            userData.AdjustElo(loser.UserProfile.PlatformId, -eloChange);
         
-            userData.IncrementTotalGames(winner.UserStatistics.PlatformId);
-            userData.IncrementTotalGames(loser.UserStatistics.PlatformId);
+            userData.IncrementTotalGames(winner.UserProfile.PlatformId);
+            userData.IncrementTotalGames(loser.UserProfile.PlatformId);
         
-            userData.IncrementWins(winner.UserStatistics.PlatformId);
-            userData.ResetWinstreak(winner.UserStatistics.PlatformId);
+            userData.IncrementWins(winner.UserProfile.PlatformId);
+            userData.ResetWinstreak(winner.UserProfile.PlatformId);
         }
         
-        private int ComputeEloChange(UserStatistics winner, UserStatistics loser)
+        private int ComputeEloChange(UserProfile winner, UserProfile loser)
         {
             if (!settings.Competitive)
                 return 0;

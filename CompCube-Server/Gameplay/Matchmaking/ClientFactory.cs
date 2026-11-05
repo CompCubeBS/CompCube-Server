@@ -8,7 +8,7 @@ namespace CompCube_Server.Gameplay.Matchmaking;
 
 public class ClientFactory(UserData userData, IServiceProvider services)
 {
-    public IConnectedClient Create(UserStatistics userInfo, WebSocket socket, TaskCompletionSource finishedTask)
+    public IConnectedClient Create(UserProfile userInfo, WebSocket socket, TaskCompletionSource finishedTask)
     {
         var client = ActivatorUtilities.CreateInstance<ConnectedClient>(services);
         

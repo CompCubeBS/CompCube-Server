@@ -25,7 +25,7 @@ public class MatchmakingClient(IConnectedClient client)
         int allowedRange = Math.Max(thisRange, otherRange);
 
         int delta = Math.Abs(
-            Client.UserStatistics.Elo - other.Client.UserStatistics.Elo);
+            Client.UserProfile.CompetitiveStats.Elo - other.Client.UserProfile.CompetitiveStats.Elo);
 
         return delta <= allowedRange;
     }

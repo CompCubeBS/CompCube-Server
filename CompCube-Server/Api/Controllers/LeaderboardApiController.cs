@@ -11,13 +11,13 @@ public class LeaderboardApiController(UserData userData) : ControllerBase
 {
     [HttpGet("api/leaderboard/range/")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<UserStatistics[]> GetLeaderboardRange(int start, int range) =>
+    public ActionResult<UserProfile[]> GetLeaderboardRange(int start, int range) =>
         userData.GetLeaderboardRange(start, range).ToArray();
 
     [HttpGet("/api/leaderboard/aroundUser/{userId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<UserStatistics[]> GetAroundUser(string userId)
+    public ActionResult<UserProfile[]> GetAroundUser(string userId)
     {
         var aroundUser = userData.GetAroundUser(userId);
 

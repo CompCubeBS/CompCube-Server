@@ -11,7 +11,7 @@ public class ContributorsApiController(UserData userData) : ControllerBase
     [HttpGet("api/contributors")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<UserInfo[]> GetContributors(string permissionFilter)
+    public ActionResult<UserProfileFull[]> GetContributors(string permissionFilter)
     {
         var users = userData.GetUserInfoByPermission(permissionFilter);
         

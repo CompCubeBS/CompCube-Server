@@ -19,13 +19,13 @@ public class DummyConnectedClient : IConnectedClient
     public event Action<ReplayRequestPacket, IConnectedClient>? OnReplayRequest;
 
     public bool IsConnectionAlive => true;
-    public UserStatistics UserStatistics => _userInfo ?? throw new Exception("Debug client accessed before initialization!");
+    public UserProfile UserProfile => _userInfo ?? throw new Exception("Debug client accessed before initialization!");
     
-    private UserStatistics? _userInfo;
+    private UserProfile? _userInfo;
     
     private List<VotingMap> _picks = [];
 
-    public void Init(UserStatistics userInfo)
+    public void Init(UserProfile userInfo)
     {
         _userInfo = userInfo;
     }

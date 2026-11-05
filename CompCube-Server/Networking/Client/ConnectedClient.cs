@@ -22,15 +22,15 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
     
     public event Action<ReplayRequestPacket, IConnectedClient>? OnReplayRequest;
 
-    private UserStatistics? _userStatistics;
+    private UserProfile? _userStatistics;
 
-    public UserStatistics UserStatistics => _userStatistics ?? throw new Exception("Client accessed before initialization!");
+    public UserProfile UserProfile => _userStatistics ?? throw new Exception("Client accessed before initialization!");
     
     private readonly CancellationTokenSource _cancellationTokenSource = new();
 
     private bool _isDisconnected = false;
 
-    public void Init(WebSocket socket, UserStatistics userInfo, TaskCompletionSource socketFinishedTcs)
+    public void Init(WebSocket socket, UserProfile userInfo, TaskCompletionSource socketFinishedTcs)
     {
         _client = socket;
         _userStatistics = userInfo;
@@ -65,7 +65,7 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
 
                 if (!UserPacket.TryDeserialize(json, out var packet))
                 {
-                    logger.LogError("Failed to deserialize packet from client {UserInfoUserId}", UserStatistics.PlatformId);
+                    logger.LogError("Failed to deserialize packet from client {UserInfoUserId}", UserProfile.PlatformId);
                     await Disconnect();
                     return;
                 }

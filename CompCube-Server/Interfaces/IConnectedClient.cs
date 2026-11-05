@@ -18,7 +18,7 @@ public interface IConnectedClient : IDisposable
 
     public bool IsConnectionAlive { get; }
 
-    public UserStatistics UserStatistics { get; }
+    public UserProfile UserProfile { get; }
 
     public Task SendPacket(ServerPacket packet);
 
