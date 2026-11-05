@@ -87,7 +87,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         var guid = claims.Claims.First(c => c.Type == "guid").Value;
         var globalName = claims.Claims.First(c => c.Type == "global_name").Value;
         var username = claims.Claims.First(c => c.Type == "username").Value;
-        var avatarUrl = claims.Claims.First(c => c.Type == "avatarUrl").Value;
+        var avatarUrl = $"https://cdn.scoresaber.com/avatars/{platformId}.jpg";
         
         if (claims.Claims.FirstOrDefault(i => i.Type == "guid" && i.Value != "") != null)
             return UpsertFromBeatKhana(platformId!, guid, globalName == "" ? username : globalName, avatarUrl);
