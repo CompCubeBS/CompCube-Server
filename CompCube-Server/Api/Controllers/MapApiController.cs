@@ -81,6 +81,7 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
 
     [HttpPatch("/api/maps/setPoolActive")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [Authorize(Policy = "RequireAdmin")]
     public IActionResult SetPoolActive(int id, bool active)
     {
         beatmapPoolData.SetPoolActiveState(id, active);
