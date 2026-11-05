@@ -20,6 +20,8 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
     private int _roundCount = 0;
 
+    private MatchEloSubmissionController _matchEloSubmissionController;
+
     public float Multiplier
     {
         get
@@ -37,6 +39,8 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
         _red = new MatchPlayer(red, new DealerV0(beatmapPoolData), true);
         _blue = new MatchPlayer(blue, new DealerV0(beatmapPoolData), false);
+
+        _matchEloSubmissionController = new MatchEloSubmissionController(matchSettings, userData);
     }
 
     public void StartMatch()
@@ -81,16 +85,14 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
             var loser = GetOther(winner);
 
-            var eloChange = ComputeEloChange(winner.UserStatistics, loser.UserStatistics);
-
             await Task.Delay(500);
+
+            var eloChange = _matchEloSubmissionController.SubmitEloForMatch(winner, loser);
 
             await Task.WhenAll(
                 winner.SendMatchResults(eloChange, true),
                 loser.SendMatchResults(eloChange, false)
             );
-
-            ApplyEloChanges(winner, loser, eloChange);
 
             Dispose();
         }
@@ -105,7 +107,7 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
             var winner = GetOther(loser);
 
-            ApplyEloChanges(winner, loser, ComputeEloChange(winner.UserStatistics, loser.UserStatistics));
+            _matchEloSubmissionController.SubmitEloForMatch(winner, loser);
 
             if (_matchSettings.Competitive)
                 timeoutManager.TimeoutUser(loser.UserStatistics.PlatformId);
@@ -120,21 +122,6 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
         {
             logger.LogError(e, "Unhandled exception during client disconnect!");
         }
-    }
-    
-    private void ApplyEloChanges(MatchPlayer winner, MatchPlayer loser, int eloChange)
-    {
-        if (!_matchSettings.Competitive)
-            return;
-        
-        userData.AdjustElo(winner.UserStatistics.PlatformId, eloChange);
-        userData.AdjustElo(loser.UserStatistics.PlatformId, -eloChange);
-        
-        userData.IncrementTotalGames(winner.UserStatistics.PlatformId);
-        userData.IncrementTotalGames(loser.UserStatistics.PlatformId);
-        
-        userData.IncrementWins(winner.UserStatistics.PlatformId);
-        userData.ResetWinstreak(winner.UserStatistics.PlatformId);
     }
 
     private async Task StartRound()
@@ -225,16 +212,6 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
         return (float) Math.Clamp(curved, 0, 1);
     }
     
-    private int ComputeEloChange(UserStatistics winner, UserStatistics loser)
-    {
-        if (!_matchSettings.Competitive)
-            return 0;
-        
-        var p = (1.0 / (1.0 + Math.Pow(10, ((winner.Elo - loser.Elo) / 400.0))));
-
-        return (int) (_matchSettings.KFactor * p);
-    }
-    
     private MatchPlayer GetOther(MatchPlayer player) => player.IsRed ? _blue : _red;
 
     public void Dispose()
@@ -244,5 +221,49 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
         
         _red.Dispose();
         _blue.Dispose();
+    }
+    
+    private class MatchEloSubmissionController(MatchSettings settings, UserData userData)
+    {
+        private bool _wasSubmitted = false;
+
+        public int SubmitEloForMatch(MatchPlayer winner, MatchPlayer loser)
+        {
+            var eloChange = ComputeEloChange(winner.UserStatistics, loser.UserStatistics);
+            
+            if (_wasSubmitted)
+                return eloChange;
+
+            _wasSubmitted = true;
+            
+            ApplyEloChanges(winner, loser, eloChange);
+
+            return eloChange;
+        }
+        
+        private void ApplyEloChanges(MatchPlayer winner, MatchPlayer loser, int eloChange)
+        {
+            if (!settings.Competitive)
+                return;
+        
+            userData.AdjustElo(winner.UserStatistics.PlatformId, eloChange);
+            userData.AdjustElo(loser.UserStatistics.PlatformId, -eloChange);
+        
+            userData.IncrementTotalGames(winner.UserStatistics.PlatformId);
+            userData.IncrementTotalGames(loser.UserStatistics.PlatformId);
+        
+            userData.IncrementWins(winner.UserStatistics.PlatformId);
+            userData.ResetWinstreak(winner.UserStatistics.PlatformId);
+        }
+        
+        private int ComputeEloChange(UserStatistics winner, UserStatistics loser)
+        {
+            if (!settings.Competitive)
+                return 0;
+        
+            var p = (1.0 / (1.0 + Math.Pow(10, ((winner.Elo - loser.Elo) / 400.0))));
+
+            return (int) (settings.KFactor * p);
+        }
     }
 }
