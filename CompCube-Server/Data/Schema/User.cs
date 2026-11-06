@@ -46,6 +46,5 @@ public class User
     [Required]
     public required DateTimeOffset Updated { get; set; }
 
-    [Required] 
     public required DateTimeOffset? LastPlayed { get; set; } = null;
 }
