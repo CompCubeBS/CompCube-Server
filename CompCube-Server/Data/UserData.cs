@@ -15,6 +15,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         "debug", 
         "0", 
         "https://cdn.scoresaber.com/avatars/oculus.png?v=1781213201", 
+        false,
         [],
         new CompetitiveInfo(
             configHelper.Season,
@@ -31,9 +32,14 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
     {
         using var scope = scopeFactory.CreateScope();
         
-        using var dataContext = scope.ServiceProvider.GetService<DataContext>()!;
+        using var context = scope.ServiceProvider.GetService<DataContext>()!;
 
-        return dataContext.Users.Include(i => i.Flairs).Where(i => i.Flairs.Any(j => j.Permissions.Contains(permissionFilter)) || i.Permissions.Contains(permissionFilter)).Select(i => GetUserInfoFromUserModel(i)).ToArray();
+        return context.Users
+            .Include(i => i.Flairs)
+            .Include(i => i.CompetetiveStatistics)
+            .Where(i => i.Flairs.Any(j => j.Permissions.Contains(permissionFilter)) || i.Permissions.Contains(permissionFilter))
+            .Select(i => GetFullUserProfileFromModel(i, context))
+            .ToArray();
     }
 
     public List<UserProfile> GetLeaderboardRange(int start, int range, int season = -1)
@@ -447,6 +453,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             user.Username, 
             user.PlatformId, 
             user.AvatarUrl, 
+            user.Banned,
             GetFlairsFromModel(user.Flairs), 
             new CompetitiveInfo(
                 competitiveStats.Season, 
