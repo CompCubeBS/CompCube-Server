@@ -54,7 +54,7 @@ public partial class ConnectionManager(
         var user = userData.UpsertFromBeatKhanaToken(claims);
 
         var userId = user.PlatformId;
-        var username = user.Username;
+        var username = user.UserName;
         
         if (_connectedClients.Any(i => i.UserProfile.PlatformId == userId))
         {
@@ -117,7 +117,7 @@ public partial class ConnectionManager(
         client.OnDisconnected -= OnDisconnected;
         
         _connectedClients.Remove(client);
-        LogUserinfousernameUserinfouseridDisconnected(logger, client.UserProfile.Username, client.UserProfile.PlatformId);
+        LogUserinfousernameUserinfouseridDisconnected(logger, client.UserProfile.UserName, client.UserProfile.PlatformId);
     }
 
     [LoggerMessage(LogLevel.Information, "{userName} ({userId}) joined queue {queue}")]

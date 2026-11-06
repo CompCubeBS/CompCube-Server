@@ -121,6 +121,7 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
             Created = DateTimeOffset.UtcNow,
             Updated = DateTimeOffset.UtcNow,
             Permissions = ["role:admin", "role:dev", "role:moderator", "role:pooler"],
+            LastPlayed = null,
             Flairs = []
         }, new User
         {
@@ -132,6 +133,7 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
             PlatformId = "76561199016011545",
             Created = DateTimeOffset.UtcNow,
             Updated = DateTimeOffset.UtcNow,
+            LastPlayed = null,
             Permissions = ["role:dev", "role:moderator"],
             Flairs = []
         });

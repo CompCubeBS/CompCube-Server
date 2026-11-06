@@ -103,7 +103,7 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
     {
         try
         {
-            logger.LogInformation("Match forfeit: Player {player} disconnected early!", loser.UserProfile.Username);
+            logger.LogInformation("Match forfeit: Player {player} disconnected early!", loser.UserProfile.UserName);
 
             var winner = GetOther(loser);
 
@@ -261,7 +261,7 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
             if (!settings.Competitive)
                 return 0;
         
-            var p = (1.0 / (1.0 + Math.Pow(10, ((winner.Elo - loser.Elo) / 400.0))));
+            var p = (1.0 / (1.0 + Math.Pow(10, ((winner.CompetitiveStats.Elo - loser.CompetitiveStats.Elo) / 400.0))));
 
             return (int) (settings.KFactor * p);
         }
