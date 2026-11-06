@@ -254,6 +254,9 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
         
             userData.IncrementWins(winner.UserProfile.PlatformId);
             userData.ResetWinstreak(winner.UserProfile.PlatformId);
+            
+            userData.UpdateUserLastPlayedTime(winner.UserProfile.PlatformId);
+            userData.UpdateUserLastPlayedTime(loser.UserProfile.PlatformId);
         }
         
         private int ComputeEloChange(UserProfile winner, UserProfile loser)

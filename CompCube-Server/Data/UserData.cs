@@ -42,6 +42,22 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             .ToArray();
     }
 
+    public void UpdateUserLastPlayedTime(string platformId)
+    {
+        using var scope = scopeFactory.CreateScope();
+
+        using var context = scope.ServiceProvider.GetService<DataContext>()!;
+        
+        var user = context.Users.SingleOrDefault(p => p.PlatformId == platformId);
+
+        if (user == null)
+            throw new Exception("Could not find user with id " + platformId);
+
+        user.LastPlayed = DateTimeOffset.UtcNow;
+        
+        context.SaveChanges();
+    }
+
     public List<UserProfile> GetLeaderboardRange(int start, int range, int season = -1)
     {
         using var scope = scopeFactory.CreateScope();
