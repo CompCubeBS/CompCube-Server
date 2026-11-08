@@ -127,12 +127,85 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
 
     public UserProfile UpsertFromBeatKhana(string platformId, string beatKhanaGuid, string userName, string avatarUrl)
     {
-        
+        using var scope = scopeFactory.CreateScope();
+        using var context = scope.ServiceProvider.GetService<DataContext>()!;
+
+        var user = context.Users
+            .Include(i => i.Flairs)
+            .Include(i => i.CompetetiveStatistics)
+            .SingleOrDefault(i => i.PlatformId == platformId);
+
+        if (user == null)
+        {
+            user = new User
+            {
+                Guid = Guid.NewGuid().ToString(),
+                PlatformId = platformId,
+                Username = userName,
+                BeatKhanaId = beatKhanaGuid,
+                AvatarUrl = avatarUrl,
+                Banned = false,
+                Permissions = [],
+                Created = DateTimeOffset.UtcNow,
+                Updated = DateTimeOffset.UtcNow,
+                LastPlayed = null
+            };
+
+            context.Users.Add(user);
+
+            context.SaveChanges();
+        }
+
+        var stats = CreateOrGetCompetitiveStatistics(user, context);
+
+        user = context.Users
+            .Include(i => i.Flairs)
+            .Include(i => i.CompetetiveStatistics)
+            .Single(i =>
+                i.CompetetiveStatistics.Any(j => j.Season == configHelper.Season) && i.PlatformId == platformId);
+
+        return new UserProfile(user.Guid, user.Username, user.PlatformId, user.AvatarUrl, user.Banned, GetFlairsFromModel(user.Flairs), GetCompetitiveInfoFromModel(stats, context));
     }
 
     public UserProfile UpsertPluginAccount(string platformId, string username)
     {
-        
+        using var scope = scopeFactory.CreateScope();
+        using var context = scope.ServiceProvider.GetService<DataContext>()!;
+
+        var user = context.Users
+            .Include(i => i.Flairs)
+            .Include(i => i.CompetetiveStatistics)
+            .SingleOrDefault(i => i.PlatformId == platformId);
+
+        if (user == null)
+        {
+            user = new User
+            {
+                Guid = Guid.NewGuid().ToString(),
+                PlatformId = platformId,
+                Username = username,
+                AvatarUrl = $"https://cdn.scoresaber.com/avatars/{platformId}.jpg",
+                Banned = false,
+                Permissions = [],
+                Created = DateTimeOffset.UtcNow,
+                Updated = DateTimeOffset.UtcNow,
+                LastPlayed = null
+            };
+
+            context.Users.Add(user);
+
+            context.SaveChanges();
+        }
+
+        var stats = CreateOrGetCompetitiveStatistics(user, context);
+
+        user = context.Users
+            .Include(i => i.Flairs)
+            .Include(i => i.CompetetiveStatistics)
+            .Single(i =>
+                i.CompetetiveStatistics.Any(j => j.Season == configHelper.Season) && i.PlatformId == platformId);
+
+        return new UserProfile(user.Guid, user.Username, user.PlatformId, user.AvatarUrl, user.Banned, GetFlairsFromModel(user.Flairs), GetCompetitiveInfoFromModel(stats, context));
     }
 
     private CompetetiveStatistics CreateOrGetCompetitiveStatistics(User user, DataContext context)
@@ -156,6 +229,8 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         };
             
         context.CompetitiveStatistics.Add(stats);
+
+        context.SaveChanges();
 
         return stats;
     }
@@ -365,12 +440,9 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         return flair.Select(i => new Flair(i.Guid, i.Name, i.Color, i.Permissions.ToArray())).ToArray();
     }
 
-    private static UserProfile? GetUserProfileFromModel(User user, int season, DataContext context)
+    private static UserProfile GetUserProfileFromModel(User user, int season, DataContext context)
     {
         var competitiveStats = user.CompetetiveStatistics.FirstOrDefault(i => i.Season == season);
-
-        if (competitiveStats == null)
-            return null;
         
         return new UserProfile(
             user.Guid, 
