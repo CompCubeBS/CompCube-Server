@@ -77,7 +77,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             .Take(range)
             .ToArray();
 
-        return users.Select(i => GetUserProfileFromModel(i, season, context)).ToList();
+        return users.Select(i => GetUserProfileFromModel(i, season, context)).Where(i => i != null).ToList()!;
     }
 
     public List<UserProfile>? GetAroundUser(string platformId, int season = -1)
@@ -105,7 +105,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         
         var count = Math.Min(10, users.Length - startIndex);
         
-        return users.Skip(startIndex).Take(count).Select(user => GetUserProfileFromModel(user, season, context)).ToList();
+        return users.Skip(startIndex).Take(count).Select(user => GetUserProfileFromModel(user, season, context)).Where(i => i != null).ToList()!;
     }
 
     public UserProfile UpsertFromBeatKhanaToken(ClaimsPrincipal claims)
@@ -460,9 +460,12 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         return flair.Select(i => new Flair(i.Guid, i.Name, i.Color, i.Permissions.ToArray())).ToArray();
     }
 
-    private static UserProfile GetUserProfileFromModel(User user, int season, DataContext context)
+    private static UserProfile? GetUserProfileFromModel(User user, int season, DataContext context)
     {
-        var competitiveStats = user.CompetetiveStatistics.First(i => i.Season == season);
+        var competitiveStats = user.CompetetiveStatistics.FirstOrDefault(i => i.Season == season);
+
+        if (competitiveStats == null)
+            return null;
         
         return new UserProfile(
             user.Guid, 
