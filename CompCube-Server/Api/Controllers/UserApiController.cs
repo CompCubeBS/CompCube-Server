@@ -3,6 +3,8 @@ using CompCube_Server.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
 
 namespace CompCube_Server.Api.Controllers;
 
@@ -80,8 +82,15 @@ public class UserApiController(UserData userData) : ControllerBase
         if (!response.IsSuccessStatusCode)
             return StatusCode(503);
 
-        var data = await response.Content.ReadAsByteArrayAsync();
+        var outputStream = new MemoryStream();
 
-        return File(data, "image/jpg");
+        var data = await response.Content.ReadAsStreamAsync();
+
+        using (var image = await Image.LoadAsync(data))
+        {
+            await image.SaveAsync(outputStream, new JpegEncoder());
+        }
+
+        return File(outputStream.ToArray(), "image/jpeg");
     }
 }
