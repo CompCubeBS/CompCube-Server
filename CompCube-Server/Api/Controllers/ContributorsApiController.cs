@@ -10,14 +10,10 @@ public class ContributorsApiController(UserData userData) : ControllerBase
 {
     [HttpGet("api/contributors")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<UserProfileFull[]> GetContributors(string permissionFilter)
     {
         var users = userData.GetUserInfoByPermission(permissionFilter);
         
-        if (users.Length == 0)
-            return NotFound();
-
         return users;
     }
 }

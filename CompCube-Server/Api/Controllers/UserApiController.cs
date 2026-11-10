@@ -1,6 +1,7 @@
 ﻿using CompCube_Models.Models.ClientData;
 using CompCube_Server.Data;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompCube_Server.Api.Controllers;
@@ -8,6 +9,8 @@ namespace CompCube_Server.Api.Controllers;
 [ApiController]
 public class UserApiController(UserData userData) : ControllerBase
 {
+    private static readonly HttpClient HttpClient = new();
+
     [HttpGet("api/user/@me")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -59,5 +62,26 @@ public class UserApiController(UserData userData) : ControllerBase
             return Ok();
         
         return NotFound();
+    }
+
+    [HttpGet("/api/user/id/{platformId}/avatar")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> GetUserAvatar(string platformId)
+    {
+        var url = userData.GetUserProfilePictureUrl(platformId);
+
+        if (url == null)
+            return NotFound();
+
+        var response = await HttpClient.GetAsync(new Uri(url, UriKind.Absolute));
+
+        if (!response.IsSuccessStatusCode)
+            return StatusCode(503);
+
+        var data = await response.Content.ReadAsByteArrayAsync();
+
+        return File(data, "image/jpg");
     }
 }

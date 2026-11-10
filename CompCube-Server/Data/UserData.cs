@@ -290,6 +290,16 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         }
     }
 
+    public string? GetUserProfilePictureUrl(string platformId)
+    {
+        using var scope = scopeFactory.CreateScope();
+        using var context = scope.ServiceProvider.GetService<DataContext>()!;
+        
+        var user = context.Users.SingleOrDefault(i => i.PlatformId == platformId);
+
+        return user?.AvatarUrl;
+    }
+
     public void AdjustElo(string platformId, int eloChange)
     {
         using var scope = scopeFactory.CreateScope();
@@ -460,15 +470,15 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         return flair.Select(i => new Flair(i.Guid, i.Name, i.Color, i.Permissions.ToArray())).ToArray();
     }
 
-    private static UserProfile GetUserProfileFromModel(User user, int season, DataContext context)
+    private UserProfile GetUserProfileFromModel(User user, int season, DataContext context)
     {
         var competitiveStats = user.CompetetiveStatistics.First(i => i.Season == season);
         
         return new UserProfile(
             user.Guid, 
             user.Username, 
-            user.PlatformId, 
-            user.AvatarUrl, 
+            user.PlatformId,
+            $"{configHelper.ApiUrl}/api/user/id/{user.PlatformId}/avatar", 
             user.Banned,
             GetFlairsFromModel(user.Flairs), 
             new CompetitiveInfo(
@@ -494,11 +504,11 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         info.BestWinStreak
         );
     
-    private static UserProfileFull GetFullUserProfileFromModel(User user, DataContext context) => new(
+    private UserProfileFull GetFullUserProfileFromModel(User user, DataContext context) => new(
         user.Username,
         user.PlatformId,
         user.BeatKhanaId,
-        user.AvatarUrl,
+        $"{configHelper.ApiUrl}/api/user/id/{user.PlatformId}/avatar",
         GetFlairsFromModel(user.Flairs),
         user.Banned,
         user.LastPlayed,

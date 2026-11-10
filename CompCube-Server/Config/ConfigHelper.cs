@@ -12,6 +12,8 @@ public class ConfigHelper(IConfiguration config)
             .GetSection("DebugAuthenticatedUserClaims")
             .AsEnumerable().Select(i => new Claim(i.Key, i.Value ?? "")).ToArray();
     
+    public string ApiUrl => config.GetSection("Website").GetValue<string>("ApiUrl") ?? throw new Exception("Could not get ApiUrl from config!");
+    
     public string BeatKhanaAuthorizationUrl => config.GetSection("BeatKhana").GetValue<string>("AuthorizationUrl") ?? throw new Exception("Could not get BeatKhana Authorization URL from config!");
     
     public string BeatKhanaClientId => config.GetSection("BeatKhana").GetValue<string>("ClientId") ?? throw new Exception("Could not get BeatKhana ClientId from config!");
