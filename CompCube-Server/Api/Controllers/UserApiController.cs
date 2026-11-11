@@ -29,9 +29,9 @@ public class UserApiController(UserData userData) : ControllerBase
     [HttpGet("/api/user/id/{platformId}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<UserProfileFull> GetUserByPlatformId(string id)
+    public ActionResult<UserProfileFull> GetUserByPlatformId(string platformId)
     {
-        var user = userData.GetFullUserProfileByPlatformId(id);
+        var user = userData.GetFullUserProfileByPlatformId(platformId);
         
         if (user == null) 
             return NotFound();
