@@ -81,8 +81,6 @@ public class UserApiController(UserData userData) : ControllerBase
         if (!response.IsSuccessStatusCode)
             return StatusCode(503);
 
-        var outputStream = new Memory<byte>();
-
         var data = await response.Content.ReadAsStreamAsync();
 
         using var image = SKBitmap.Decode(data);
