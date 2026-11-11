@@ -21,6 +21,8 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
     private int _roundCount = 0;
 
     private MatchEloSubmissionController _matchEloSubmissionController;
+    
+    private readonly CancellationTokenSource _cts = new();
 
     public float Multiplier
     {
@@ -65,11 +67,11 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
             await Task.WhenAll(
                 _red.StartAndWaitForDiscardPhaseToComplete(_blue.UserProfile),
                 _blue.StartAndWaitForDiscardPhaseToComplete(_red.UserProfile)
-            );
+            ).WaitAsync(_cts.Token);
 
             while (true)
             {
-                await StartRound();
+                await StartRound().WaitAsync(_cts.Token);
 
                 if (_red.AvailablePicks.Count <= 0 && _blue.AvailablePicks.Count <= 0)
                     break;
@@ -96,7 +98,10 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
 
             Dispose();
         }
-        catch (OperationCanceledException){}
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("Match cancelled!");
+        }
     }
 
     private async void HandleClientDisconnected(MatchPlayer loser)
@@ -115,6 +120,8 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
             winner.ClientDidDisconnect -= HandleClientDisconnected;
             
             await winner.DisconnectAbruptly("Player Forfeit");
+            
+            await _cts.CancelAsync();
             
             Dispose();
         }
