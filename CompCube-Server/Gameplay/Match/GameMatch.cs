@@ -95,12 +95,14 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
                 winner.SendMatchResults(eloChange, true),
                 loser.SendMatchResults(eloChange, false)
             );
-
-            Dispose();
         }
         catch (OperationCanceledException)
         {
             logger.LogInformation("Match cancelled!");
+        }
+        finally
+        {
+            Dispose();
         }
     }
 
@@ -122,8 +124,6 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
             await winner.DisconnectAbruptly("Player Forfeit");
             
             await _cts.CancelAsync();
-            
-            Dispose();
         }
         catch (Exception e)
         {
