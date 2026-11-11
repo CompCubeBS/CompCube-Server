@@ -3,8 +3,7 @@ using CompCube_Server.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
+using SkiaSharp;
 
 namespace CompCube_Server.Api.Controllers;
 
@@ -82,15 +81,16 @@ public class UserApiController(UserData userData) : ControllerBase
         if (!response.IsSuccessStatusCode)
             return StatusCode(503);
 
-        var outputStream = new MemoryStream();
+        var outputStream = new Memory<byte>();
 
         var data = await response.Content.ReadAsStreamAsync();
 
-        using (var image = await Image.LoadAsync(data))
-        {
-            await image.SaveAsync(outputStream, new JpegEncoder());
-        }
+        using var image = SKBitmap.Decode(data);
+        
+        using var targetBitmap = new SKBitmap(new SKImageInfo(image.Width, image.Height, SKImageInfo.PlatformColorType, SKAlphaType.Opaque));
 
-        return File(outputStream.ToArray(), "image/jpeg");
+        using var final = SKImage.FromBitmap(image);
+        
+        return File(final.Encode(SKEncodedImageFormat.Jpeg, 80).ToArray(), "image/jpeg");
     }
 }
