@@ -14,6 +14,7 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
 {
     private WebSocket _client;
     private TaskCompletionSource _socketFinishedTcs;
+    private CancellationToken _token;
 
     public event Action<DiscardMapsPacket, IConnectedClient>? OnUserDiscardedMaps;
     public event Action<MapSelectionPacket, IConnectedClient>? OnMapSelection;
@@ -25,16 +26,15 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
     private UserProfile? _userStatistics;
 
     public UserProfile UserProfile => _userStatistics ?? throw new Exception("Client accessed before initialization!");
-    
-    private readonly CancellationTokenSource _cancellationTokenSource = new();
 
     private bool _isDisconnected = false;
 
-    public void Init(WebSocket socket, UserProfile userInfo, TaskCompletionSource socketFinishedTcs)
+    public void Init(WebSocket socket, UserProfile userInfo, TaskCompletionSource socketFinishedTcs, CancellationToken token)
     {
         _client = socket;
         _userStatistics = userInfo;
         _socketFinishedTcs = socketFinishedTcs;
+        _token = token;
         
         Task.Factory.StartNew(ListenToClient, TaskCreationOptions.LongRunning);
     }
@@ -47,9 +47,9 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
             {
                 var buffer = new byte[4096];
                 
-                _cancellationTokenSource.Token.ThrowIfCancellationRequested();
+                _token.ThrowIfCancellationRequested();
 
-                var result = await _client.ReceiveAsync(new ArraySegment<byte>(buffer), _cancellationTokenSource.Token);
+                var result = await _client.ReceiveAsync(new ArraySegment<byte>(buffer), _token);
                 Array.Resize(ref buffer, result.Count);
 
                 if (result.MessageType == WebSocketMessageType.Close)
@@ -75,6 +75,7 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
         }
         catch (OperationCanceledException)
         {
+            await Disconnect();
         }
         catch (WebSocketException)
         {
@@ -92,12 +93,10 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
         if (_isDisconnected)
             return;
         _isDisconnected = true;
-        
-        await _cancellationTokenSource.CancelAsync();
 
         try
         {
-            await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", _cancellationTokenSource.Token);
+            await _client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", _token);
         }
         catch (OperationCanceledException)
         {
@@ -159,7 +158,7 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
         try
         {
             await _client.SendAsync(new ArraySegment<byte>(packet.SerializeToBytes()), WebSocketMessageType.Text, true,
-                _cancellationTokenSource.Token);
+                _token);
         }
         catch (WebSocketException)
         {
@@ -174,6 +173,5 @@ public class ConnectedClient(ILogger<ConnectedClient> logger) : IConnectedClient
     public void Dispose()
     {
         _client.Dispose();
-        _cancellationTokenSource.Dispose();
     }
 }

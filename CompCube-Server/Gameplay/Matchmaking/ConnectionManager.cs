@@ -4,6 +4,7 @@ using CompCube_Server.Api.BeatSaver;
 using CompCube_Server.Config;
 using CompCube_Server.Data;
 using CompCube_Server.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CompCube_Server.Gameplay.Matchmaking;
@@ -22,6 +23,7 @@ public partial class ConnectionManager(
     private readonly List<IConnectedClient> _connectedClients = [];
 
     [Route("queue/{queueName}")]
+    [Authorize]
     public async Task HandleWebSocket(string queueName)
     {
         if (!HttpContext.WebSockets.IsWebSocketRequest)
@@ -29,29 +31,16 @@ public partial class ConnectionManager(
             HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             return;
         }
-
+        
         var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 
-        if (!HttpContext.Request.Headers.TryGetValue("Authorization", out var tokenValues))
+        if (User.Identity is not { IsAuthenticated: true })
         {
-            if (HttpContext.Response.HasStarted)
-                return;
-            
-            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
             return;
         }
 
-        var token = tokenValues.First()?["Bearer ".Length..];
-
-        if (token == null)
-        {
-            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            return;
-        }
-
-        var claims = await beatKhanaService.VerifyAccessToken(token);
-
-        var user = userData.UpsertFromBeatKhanaToken(claims);
+        var user = userData.UpsertFromBeatKhanaToken(User);
 
         var userId = user.PlatformId;
         var username = user.UserName;
@@ -74,7 +63,7 @@ public partial class ConnectionManager(
             return;
         }
 
-        var connectedClient = clientFactory.Create(userInfo, websocket, tcs);
+        var connectedClient = clientFactory.Create(userInfo, websocket, tcs, HttpContext.RequestAborted);
         
         if (userInfo.Banned)
         {
