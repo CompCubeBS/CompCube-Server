@@ -122,7 +122,8 @@ public class Program
 
         host.UseWebSockets(new WebSocketOptions
         {
-            KeepAliveInterval = TimeSpan.FromSeconds(30),
+            KeepAliveInterval = TimeSpan.FromSeconds(7),
+            KeepAliveTimeout = TimeSpan.FromSeconds(7),
         });
         
         host.Run();
