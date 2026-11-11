@@ -37,7 +37,7 @@ public class StandardCompetitiveQueue : StandardQueue
 
     private void OnClientDisconnected(IConnectedClient client)
     {
-        _clientPool.RemoveAll(c => c.Client == client);
+        _clientPool.RemoveAll(c => c.Client.UserProfile.PlatformId == client.UserProfile.PlatformId);
     }
 
     public void Stop()
