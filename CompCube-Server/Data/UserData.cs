@@ -371,22 +371,6 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             throw;
         }
     }
-    
-    public List<UserProfile> GetAllUserProfiles(int season = -1)
-    {
-        using var scope = scopeFactory.CreateScope();
-        
-        var context = scope.ServiceProvider.GetService<DataContext>()!;
-        
-        var users = context.Users.Include(p => p.CompetetiveStatistics)
-            .Include(p => p.Flairs)
-            .Where(i => !i.Banned)
-            .Where(i => i.CompetetiveStatistics.Any(j => j.Season == season))
-            .OrderByDescending(i => i.CompetetiveStatistics.First(j => j.Season == season).Elo)
-            .ToArray();
-
-        return users.Select(user => GetUserProfileFromModel(user, season, context)).ToList();
-    }
 
     public bool SetFlairs(string platformId, string[] flairGuids)
     {
@@ -432,7 +416,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         
         var context = scope.ServiceProvider.GetService<DataContext>()!;
         
-        var user = context.Users.Include(user => user.Flairs).FirstOrDefault(i => i.PlatformId == platformId);
+        var user = context.Users.Include(i => i.CompetetiveStatistics).Include(user => user.Flairs).FirstOrDefault(i => i.PlatformId == platformId);
 
         if (user == null)
             return null;
