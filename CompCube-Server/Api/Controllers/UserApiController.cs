@@ -16,6 +16,7 @@ public class UserApiController(UserData userData) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [Authorize]
     public ActionResult<UserProfileFull> GetSelf()
     {
         var self = User.Claims.FirstOrDefault(c => c.Type == "platformId")?.Value;
@@ -29,6 +30,7 @@ public class UserApiController(UserData userData) : ControllerBase
     [HttpGet("/api/user/id/{platformId}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [AllowAnonymous]
     public ActionResult<UserProfileFull> GetUserByPlatformId(string platformId)
     {
         var user = userData.GetFullUserProfileByPlatformId(platformId);

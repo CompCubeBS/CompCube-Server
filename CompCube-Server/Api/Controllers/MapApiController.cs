@@ -47,7 +47,7 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
         return jObject.ToString();
     }
 
-    [HttpPost("/api/maps/forceaddbykey")]
+    [HttpPost("/api/maps/forceAddByKey")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
