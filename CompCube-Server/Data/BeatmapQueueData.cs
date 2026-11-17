@@ -82,7 +82,12 @@ public class BeatmapQueueData(
 
             var maxScore = diff.Value<int>("maxScore");
             
-            poolData.AddMap(map.Hash, map.Difficulty, map.Category, maxScore, duration);
+            var songArtist = beatSaverMap["metadata"]!.Value<string>("songAuthorName")!;
+            var songTitle = beatSaverMap["metadata"]!.Value<string>("songName")!;
+            var coverUrl = beatSaverMap["versions"]![0]!.Value<string>("coverURL")!;
+            var mapper = beatSaverMap["metadata"]!.Value<string>("levelAuthorName")!;
+            
+            poolData.AddMap(map.Hash, songTitle, songArtist, mapper, coverUrl, map.Difficulty, map.Category, maxScore, duration);
         }
     }
 }

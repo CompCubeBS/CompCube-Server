@@ -74,7 +74,12 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
         
         var maxScore = diff["maxScore"]!.Value<int>();
         
-        beatmapPoolData.AddMap(hash, difficultyType, categoryType, maxScore, seconds, poolIds.Split(",").Select(i => int.Parse(i)).ToArray());
+        var songArtist = beatmap["metadata"]!.Value<string>("songAuthorName")!;
+        var songTitle = beatmap["metadata"]!.Value<string>("songName")!;
+        var coverUrl = beatmap["versions"]![0]!.Value<string>("coverURL")!;
+        var mapper = beatmap["metadata"]!.Value<string>("levelAuthorName")!;
+        
+        beatmapPoolData.AddMap(hash, songTitle, songArtist, mapper, coverUrl, difficultyType, categoryType, maxScore, seconds, poolIds.Split(",").Select(i => int.Parse(i)).ToArray());
 
         return Ok();
     }
@@ -94,7 +99,7 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Authorize(Policy = "RequireAdmin")]
-    public IActionResult AddMap( 
+    public async Task<IActionResult> AddMap( 
         string hash, 
         string difficulty, 
         string category,
@@ -106,8 +111,15 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
         if (!Enum.TryParse<VotingMap.DifficultyType>(difficulty, out var difficultyType) || 
             !Enum.TryParse<VotingMap.Category>(category, out var categoryType))
             return BadRequest();
+        
+        var beatmap = await beatSaver.GetBeatmapFromHash(hash);
+        
+        var songArtist = beatmap["metadata"]!.Value<string>("songAuthorName")!;
+        var songTitle = beatmap["metadata"]!.Value<string>("songName")!;
+        var coverUrl = beatmap["versions"]![0]!.Value<string>("coverURL")!;
+        var mapper = beatmap["metadata"]!.Value<string>("levelAuthorName")!;
 
-        beatmapPoolData.AddMap(hash, difficultyType, categoryType, maxScore, durationSeconds, poolIds.Split(",").Select(i => int.Parse(i)).ToArray());
+        beatmapPoolData.AddMap(hash, songTitle, songArtist, mapper, coverUrl, difficultyType, categoryType, maxScore, durationSeconds, poolIds.Split(",").Select(i => int.Parse(i)).ToArray());
 
         return Ok();
     }

@@ -114,6 +114,10 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
     }
     
     public void AddMap(string hash, 
+        string songTitle,
+        string songArtist,
+        string mapperName,
+        string coverUrl,
         VotingMap.DifficultyType difficulty,
         VotingMap.Category category,
         int maxScore,

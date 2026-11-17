@@ -13,6 +13,18 @@ public class Beatmap
     [MaxLength(64)]
     public string Hash { get; set; }
     
+    [MaxLength(128)]
+    public string? SongTitle { get; set; }
+    
+    [MaxLength(64)]
+    public string? SongAuthor { get; set; }
+    
+    [MaxLength(64)]
+    public string? SongCoverUrl { get; set; }
+    
+    [MaxLength(64)]
+    public string? MapperName { get; set; }
+    
     [Required]
     public int MaxScore { get; set; }
     

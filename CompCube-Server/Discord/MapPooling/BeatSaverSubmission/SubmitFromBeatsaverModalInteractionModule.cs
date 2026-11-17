@@ -60,6 +60,8 @@ public class SubmitFromBeatsaverModalInteractionModule(
         
         var poolingChannelId = config.GetSection("Discord").GetSection("PoolingChannelIds").GetValue<ulong>(category);
 
+        var mapper = beatSaverBeatmap["metadata"]!.Value<string>("levelAuthorName");
+        
         var forumThread = await client.CreateForumGuildThreadAsync(poolingChannelId, new ForumGuildThreadProperties($"({beatSaverBeatmap["metadata"]!.Value<string>("levelAuthorName")}) {beatSaverBeatmap.Value<string>("name")}", new ForumGuildThreadMessageProperties
         {
             Embeds = [new EmbedProperties
@@ -94,7 +96,7 @@ public class SubmitFromBeatsaverModalInteractionModule(
                     {
                         Inline = false,
                         Name = "Mapper",
-                        Value = $"{beatSaverBeatmap["metadata"]!.Value<string>("levelAuthorName")} ({beatSaverBeatmap["uploader"]!.Value<string>("name")})"
+                        Value = $"{mapper} ({beatSaverBeatmap["uploader"]!.Value<string>("name")})"
                     },
                 ]
             }]
