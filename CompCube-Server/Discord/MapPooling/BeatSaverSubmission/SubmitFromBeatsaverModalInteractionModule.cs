@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 namespace CompCube_Server.Discord.MapPooling;
 
 public class SubmitFromBeatsaverModalInteractionModule(
+    DiscordConfigHelper configHelper,
     IConfiguration config, 
     RestClient client, 
     BeatSaverService beatSaverApi,
@@ -103,10 +104,10 @@ public class SubmitFromBeatsaverModalInteractionModule(
 
         await forumThread.SendMessageAsync(new MessageProperties()
         {
-            Content = $"<@&{1438697609383514163}>",
+            Content = $"<@&{configHelper.PoolerRoleId}>",
             AllowedMentions = new AllowedMentionsProperties()
             {
-                AllowedRoles = [1438697609383514163],
+                AllowedRoles = [configHelper.PoolerRoleId],
                 AllowedUsers = null
             },
             
