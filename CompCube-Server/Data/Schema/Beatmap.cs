@@ -29,10 +29,10 @@ public class Beatmap
     public int MaxScore { get; set; }
     
     [Required]
-    public VotingMap.Category Category { get; set; }
+    public BeatmapData.Category Category { get; set; }
     
     [Required]
-    public VotingMap.DifficultyType Difficulty { get; set; }
+    public BeatmapData.DifficultyType Difficulty { get; set; }
     
     [Required]
     public int DurationSeconds { get; set; }

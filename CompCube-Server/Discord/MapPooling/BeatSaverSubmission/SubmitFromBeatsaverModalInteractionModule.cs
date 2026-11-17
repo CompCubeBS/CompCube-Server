@@ -43,8 +43,8 @@ public class SubmitFromBeatsaverModalInteractionModule(
             return;
         }
         
-        var categoryEnum = Enum.Parse<VotingMap.Category>(category);
-        var diffEnum = Enum.Parse<VotingMap.DifficultyType>(difficulty);
+        var categoryEnum = Enum.Parse<BeatmapData.Category>(category);
+        var diffEnum = Enum.Parse<BeatmapData.DifficultyType>(difficulty);
 
         JObject beatSaverBeatmap;
 

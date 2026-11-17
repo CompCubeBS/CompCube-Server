@@ -23,7 +23,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         return true;
     }
     
-    public List<VotingMap> GetAllMapsFromActivePools()
+    public List<BeatmapData> GetAllMapsFromActivePools()
     {
         using var scope = scopeFactory.CreateScope();
 
@@ -31,17 +31,17 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         
         var pools = context.Pools.Include(p => p.Maps).Where(i => i.Active);
         
-        var maps = new List<VotingMap>();
+        var maps = new List<BeatmapData>();
 
         foreach (var pool in pools)
         {
-            maps = maps.Concat(pool.Maps.Select(i => new VotingMap(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))).ToList();
+            maps = maps.Concat(pool.Maps.Select(i => new BeatmapData(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))).ToList();
         }
 
         return maps;
     }
 
-    public VotingMap? GetBeatmapByGuid(string guid)
+    public BeatmapData? GetBeatmapByGuid(string guid)
     {
         using var scope = scopeFactory.CreateScope();
 
@@ -52,10 +52,10 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         if (beatmap == null)
             return null;
         
-        return new VotingMap(beatmap.Guid, beatmap.Hash, beatmap.Difficulty, beatmap.Category, beatmap.MaxScore, beatmap.DurationSeconds);
+        return new BeatmapData(beatmap.Guid, beatmap.Hash, beatmap.Difficulty, beatmap.Category, beatmap.MaxScore, beatmap.DurationSeconds);
     }
     
-    public VotingMap[] GetQualifiedMaps()
+    public BeatmapData[] GetQualifiedMaps()
     {
         using var scope = scopeFactory.CreateScope();
 
@@ -64,7 +64,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         return dataContext.Beatmaps
             .Include(i => i.Pools)
             .Where(i => i.Pools.Count == 0)
-            .Select(i => new VotingMap(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
+            .Select(i => new BeatmapData(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
             .ToArray();
     }
     
@@ -99,7 +99,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         }
     }
     
-    public List<VotingMap> GetMaps()
+    public List<BeatmapData> GetMaps()
     {
         using var scope = scopeFactory.CreateScope();
         
@@ -109,7 +109,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
             .Include(i => i.Pools)
             .Where(i => i.Pools.Count == 0)
             .ToArray()
-            .Select(i => new VotingMap(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
+            .Select(i => new BeatmapData(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
             .ToList();
     }
     
@@ -118,8 +118,8 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         string songArtist,
         string mapperName,
         string coverUrl,
-        VotingMap.DifficultyType difficulty,
-        VotingMap.Category category,
+        BeatmapData.DifficultyType difficulty,
+        BeatmapData.Category category,
         int maxScore,
         int durationSeconds,
         int[]? poolIds = null)

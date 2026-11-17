@@ -26,15 +26,15 @@ public class MapLog(RestClient restClient, BeatSaverService beatSaver, DiscordCo
             $"[❌{(inactivity ? "💤" : string.Empty)}] {data.Item1} ({data.Item2}) has been denied.");
     }
 
-    private async Task<Tuple<string, VotingMap.DifficultyType, VotingMap.Category>> GetMapDataFromGuildThread(GuildThread thread)
+    private async Task<Tuple<string, BeatmapData.DifficultyType, BeatmapData.Category>> GetMapDataFromGuildThread(GuildThread thread)
     {
         var message = await thread.GetMessageAsync(thread.Id);
 
         var name = message.Embeds.First().Title;
-        var difficulty = Enum.Parse<VotingMap.DifficultyType>(message.Embeds.First().Fields.First(i => i.Name == "Difficulty").Value);
+        var difficulty = Enum.Parse<BeatmapData.DifficultyType>(message.Embeds.First().Fields.First(i => i.Name == "Difficulty").Value);
         var category =
-            Enum.Parse<VotingMap.Category>(message.Embeds.First().Fields.First(i => i.Name == "Category").Value);
+            Enum.Parse<BeatmapData.Category>(message.Embeds.First().Fields.First(i => i.Name == "Category").Value);
         
-        return new Tuple<string, VotingMap.DifficultyType, VotingMap.Category>(name!, difficulty, category);
+        return new Tuple<string, BeatmapData.DifficultyType, BeatmapData.Category>(name!, difficulty, category);
     }
 }

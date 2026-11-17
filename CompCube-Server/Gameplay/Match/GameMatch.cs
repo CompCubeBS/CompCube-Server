@@ -201,18 +201,18 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
         loser.Damage(CurveDamageDifference(redScore, blueScore, map!), Multiplier);
     }
     
-    private static float CurveDamageDifference(Score redScore, Score blueScore, VotingMap map)
+    private static float CurveDamageDifference(Score redScore, Score blueScore, BeatmapData map)
     {
         var difference = Math.Abs(((float) redScore.Points / map!.MaxScore) - ((float) blueScore.Points / map.MaxScore));
         
         var curved = map.MapCategory switch
         {
-            VotingMap.Category.MidSpeed => 5.17319f * Math.Pow(difference, .579536f),
-            VotingMap.Category.Accuracy => 48.34573f * Math.Pow(difference, 1.10281f),
-            VotingMap.Category.Speed => 2.47073f * Math.Pow(difference, .467712f),
-            VotingMap.Category.Extreme => 2.23623f * Math.Pow(difference, .505025f),
-            VotingMap.Category.Tech => 2.35749f * Math.Pow(difference, .492089f),
-            VotingMap.Category.Special => 2 * difference,
+            BeatmapData.Category.MidSpeed => 5.17319f * Math.Pow(difference, .579536f),
+            BeatmapData.Category.Accuracy => 48.34573f * Math.Pow(difference, 1.10281f),
+            BeatmapData.Category.Speed => 2.47073f * Math.Pow(difference, .467712f),
+            BeatmapData.Category.Extreme => 2.23623f * Math.Pow(difference, .505025f),
+            BeatmapData.Category.Tech => 2.35749f * Math.Pow(difference, .492089f),
+            BeatmapData.Category.Special => 2 * difference,
             _ => difference
         };
 

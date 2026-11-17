@@ -18,9 +18,9 @@ public class MatchPlayer : IDisposable
     
     public bool IsRed { get; }
 
-    public IReadOnlyList<VotingMap> AvailablePicks => _availablePicks;
+    public IReadOnlyList<BeatmapData> AvailablePicks => _availablePicks;
 
-    private VotingMap[] _availablePicks;
+    private BeatmapData[] _availablePicks;
     private readonly IConnectedClient _client;
     private readonly IDealer _dealer;
 
@@ -74,7 +74,7 @@ public class MatchPlayer : IDisposable
 
     private Action<MapSelectionPacket, IConnectedClient>? _clientPickPhaseWrapper;
     
-    public async Task<VotingMap?> StartPickPhaseForClient(bool isPicking, float multiplier, float redHealth, float blueHealth)
+    public async Task<BeatmapData?> StartPickPhaseForClient(bool isPicking, float multiplier, float redHealth, float blueHealth)
     {
         if (!isPicking)
         {
@@ -82,7 +82,7 @@ public class MatchPlayer : IDisposable
             return null;
         }
         
-        var tcs = new TaskCompletionSource<VotingMap>();
+        var tcs = new TaskCompletionSource<BeatmapData>();
         
         _clientPickPhaseWrapper = HandleClientSelectedMap;
         
@@ -107,7 +107,7 @@ public class MatchPlayer : IDisposable
 
     private Action<ScoreSubmissionPacket, IConnectedClient>? _handleScoreSubmissionWrapper;
 
-    public async Task<Tuple<MatchPlayer, Score>> PlayMap(VotingMap map, UserProfile? opponentWhoRequestedReplayIfApplies = null)
+    public async Task<Tuple<MatchPlayer, Score>> PlayMap(BeatmapData map, UserProfile? opponentWhoRequestedReplayIfApplies = null)
     {
         var tcs = new TaskCompletionSource<Score>();
         
@@ -163,7 +163,7 @@ public class MatchPlayer : IDisposable
         }
     }
 
-    public async Task<Tuple<MatchPlayer, Score>> ReplayMap(VotingMap map, UserProfile? opponentWhoRequestedReplayIfApplies)
+    public async Task<Tuple<MatchPlayer, Score>> ReplayMap(BeatmapData map, UserProfile? opponentWhoRequestedReplayIfApplies)
     {
         return await PlayMap(map, opponentWhoRequestedReplayIfApplies);
     }

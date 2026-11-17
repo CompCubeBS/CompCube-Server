@@ -8,9 +8,9 @@ public class DealerV0(BeatmapPoolData beatmapPoolData) : IDealer
 {
     private static readonly Random Random = new();
     
-    private List<VotingMap> _discardedOrAlreadyPulled = [];
+    private List<BeatmapData> _discardedOrAlreadyPulled = [];
     
-    public VotingMap[] PullNewCards(int count)
+    public BeatmapData[] PullNewCards(int count)
     {
         var maps = beatmapPoolData.GetAllMapsFromActivePools().Where(i => !_discardedOrAlreadyPulled.Contains(i));
 
@@ -23,12 +23,12 @@ public class DealerV0(BeatmapPoolData beatmapPoolData) : IDealer
         return pulledMaps;
     }
 
-    public void AddDiscarded(VotingMap[] disallowedMaps)
+    public void AddDiscarded(BeatmapData[] disallowedMaps)
     {
         _discardedOrAlreadyPulled = _discardedOrAlreadyPulled.Concat(disallowedMaps).ToList();
     }
 
-    public VotingMap[] CompleteDeck(VotingMap[] currentDeck, int targetSize)
+    public BeatmapData[] CompleteDeck(BeatmapData[] currentDeck, int targetSize)
     {
         if (currentDeck.Length == targetSize)
             return currentDeck;

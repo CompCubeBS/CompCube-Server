@@ -55,8 +55,8 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
     [Authorize(Policy = "RequireAdmin")]
     public async Task<IActionResult> ForceAddMapByBeatSaverKey(string key, string difficulty, string category, string poolIds)
     {
-        if (!Enum.TryParse<VotingMap.DifficultyType>(difficulty, out var difficultyType) || 
-            !Enum.TryParse<VotingMap.Category>(category, out var categoryType))
+        if (!Enum.TryParse<BeatmapData.DifficultyType>(difficulty, out var difficultyType) || 
+            !Enum.TryParse<BeatmapData.Category>(category, out var categoryType))
             return BadRequest();
 
         var beatmap = await beatSaver.GetBeatmapFromKey(key);
@@ -108,8 +108,8 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
         string poolIds
         )
     {
-        if (!Enum.TryParse<VotingMap.DifficultyType>(difficulty, out var difficultyType) || 
-            !Enum.TryParse<VotingMap.Category>(category, out var categoryType))
+        if (!Enum.TryParse<BeatmapData.DifficultyType>(difficulty, out var difficultyType) || 
+            !Enum.TryParse<BeatmapData.Category>(category, out var categoryType))
             return BadRequest();
         
         var beatmap = await beatSaver.GetBeatmapFromHash(hash);
@@ -125,11 +125,11 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
     }
 }
 
-public class PlaylistSong(string hash, VotingMap.DifficultyType[] difficultyTypes)
+public class PlaylistSong(string hash, BeatmapData.DifficultyType[] difficultyTypes)
 {
     public readonly string Hash = hash;
 
-    public readonly VotingMap.DifficultyType[] DifficultyTypes = difficultyTypes;
+    public readonly BeatmapData.DifficultyType[] DifficultyTypes = difficultyTypes;
 
     public JObject GetJsonObject()
     {
