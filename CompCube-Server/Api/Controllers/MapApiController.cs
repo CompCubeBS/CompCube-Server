@@ -14,7 +14,7 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
     [HttpGet("/api/maps/hashes")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [AllowAnonymous]
-    public ActionResult<string[]> GetAllMapHashes() => beatmapPoolData.GetAllMapsFromActivePools().Select(i => i.Hash).ToArray();
+    public ActionResult<string[]> GetAllMapHashes() => beatmapPoolData.GetFullBeatmapDataFromActivePools().Select(i => i.Hash).ToArray();
 
     [HttpGet("/api/maps/playlist")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -86,10 +86,12 @@ public class MapApiController(BeatmapPoolData beatmapPoolData, BeatSaverService 
 
     [HttpPatch("/api/maps/setPoolActive")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [Authorize(Policy = "RequireAdmin")]
     public IActionResult SetPoolActive(int id, bool active)
     {
-        beatmapPoolData.SetPoolActiveState(id, active);
+        if (!beatmapPoolData.SetPoolActiveState(id, active))
+            return BadRequest();
 
         return Ok();
     }

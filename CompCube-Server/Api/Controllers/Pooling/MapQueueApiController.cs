@@ -12,7 +12,7 @@ public class MapQueueApiController(BeatmapPoolData beatmapPoolData) : Controller
     [HttpGet("/api/queue/qualified")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Authorize(Policy = "RequirePooler")]
-    public ActionResult<BeatmapData[]> GetQualifiedMaps()
+    public ActionResult<BeatmapDataFull[]> GetQualifiedMaps()
     {
         return beatmapPoolData.GetQualifiedMaps();
     }

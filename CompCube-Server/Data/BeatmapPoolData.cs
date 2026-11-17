@@ -23,25 +23,26 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         return true;
     }
     
-    public List<BeatmapData> GetAllMapsFromActivePools()
+    public List<BeatmapData> GetAllMapsFromActivePools() => GetFullBeatmapDataFromActivePools().Cast<BeatmapData>().ToList();
+
+    public List<BeatmapDataFull> GetFullBeatmapDataFromActivePools()
     {
         using var scope = scopeFactory.CreateScope();
-
-        var context = scope.ServiceProvider.GetService<DataContext>()!;
+        using var context = scope.ServiceProvider.GetService<DataContext>()!;
         
         var pools = context.Pools.Include(p => p.Maps).Where(i => i.Active);
         
-        var maps = new List<BeatmapData>();
+        var maps = new List<BeatmapDataFull>();
 
         foreach (var pool in pools)
         {
-            maps = maps.Concat(pool.Maps.Select(i => new BeatmapData(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))).ToList();
+            maps = maps.Concat(pool.Maps.Select(i => new BeatmapDataFull(i.SongTitle, i.SongAuthor, i.MapperName, i.SongCoverUrl, i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))).ToList();
         }
 
         return maps;
     }
 
-    public BeatmapData? GetBeatmapByGuid(string guid)
+    public BeatmapDataFull? GetBeatmapByGuid(string guid)
     {
         using var scope = scopeFactory.CreateScope();
 
@@ -52,10 +53,10 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         if (beatmap == null)
             return null;
         
-        return new BeatmapData(beatmap.Guid, beatmap.Hash, beatmap.Difficulty, beatmap.Category, beatmap.MaxScore, beatmap.DurationSeconds);
+        return new BeatmapDataFull(beatmap.SongTitle, beatmap.SongAuthor, beatmap.MapperName, beatmap.SongCoverUrl, beatmap.Guid, beatmap.Hash, beatmap.Difficulty, beatmap.Category, beatmap.MaxScore, beatmap.DurationSeconds);
     }
     
-    public BeatmapData[] GetQualifiedMaps()
+    public BeatmapDataFull[] GetQualifiedMaps()
     {
         using var scope = scopeFactory.CreateScope();
 
@@ -64,7 +65,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         return dataContext.Beatmaps
             .Include(i => i.Pools)
             .Where(i => i.Pools.Count == 0)
-            .Select(i => new BeatmapData(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
+            .Select(i => new BeatmapDataFull(i.SongTitle, i.SongAuthor, i.MapperName, i.SongCoverUrl, i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
             .ToArray();
     }
     
@@ -156,7 +157,11 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
                 Category = category,
                 MaxScore = maxScore,
                 DurationSeconds = durationSeconds,
-                Pools = pools.ToList()!
+                Pools = pools.ToList()!,
+                SongTitle = songTitle,
+                SongAuthor = songArtist,
+                SongCoverUrl = coverUrl,
+                MapperName = mapperName
             });
 
             context.SaveChanges();
