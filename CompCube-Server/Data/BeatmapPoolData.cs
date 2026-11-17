@@ -23,26 +23,26 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         return true;
     }
     
-    public List<BeatmapData> GetAllMapsFromActivePools() => GetFullBeatmapDataFromActivePools().Cast<BeatmapData>().ToList();
+    public List<CCBeatmapData> GetAllMapsFromActivePools() => GetFullBeatmapDataFromActivePools().Cast<CCBeatmapData>().ToList();
 
-    public List<BeatmapDataFull> GetFullBeatmapDataFromActivePools()
+    public List<CCBeatmapDataFull> GetFullBeatmapDataFromActivePools()
     {
         using var scope = scopeFactory.CreateScope();
         using var context = scope.ServiceProvider.GetService<DataContext>()!;
         
         var pools = context.Pools.Include(p => p.Maps).Where(i => i.Active);
         
-        var maps = new List<BeatmapDataFull>();
+        var maps = new List<CCBeatmapDataFull>();
 
         foreach (var pool in pools)
         {
-            maps = maps.Concat(pool.Maps.Select(i => new BeatmapDataFull(i.SongTitle, i.SongAuthor, i.MapperName, i.SongCoverUrl, i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))).ToList();
+            maps = maps.Concat(pool.Maps.Select(i => new CCBeatmapDataFull(i.SongTitle, i.SongAuthor, i.MapperName, i.SongCoverUrl, i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))).ToList();
         }
 
         return maps;
     }
 
-    public BeatmapDataFull? GetBeatmapByGuid(string guid)
+    public CCBeatmapDataFull? GetBeatmapByGuid(string guid)
     {
         using var scope = scopeFactory.CreateScope();
 
@@ -53,10 +53,10 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         if (beatmap == null)
             return null;
         
-        return new BeatmapDataFull(beatmap.SongTitle, beatmap.SongAuthor, beatmap.MapperName, beatmap.SongCoverUrl, beatmap.Guid, beatmap.Hash, beatmap.Difficulty, beatmap.Category, beatmap.MaxScore, beatmap.DurationSeconds);
+        return new CCBeatmapDataFull(beatmap.SongTitle, beatmap.SongAuthor, beatmap.MapperName, beatmap.SongCoverUrl, beatmap.Guid, beatmap.Hash, beatmap.Difficulty, beatmap.Category, beatmap.MaxScore, beatmap.DurationSeconds);
     }
     
-    public BeatmapDataFull[] GetQualifiedMaps()
+    public CCBeatmapDataFull[] GetQualifiedMaps()
     {
         using var scope = scopeFactory.CreateScope();
 
@@ -65,7 +65,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         return dataContext.Beatmaps
             .Include(i => i.Pools)
             .Where(i => i.Pools.Count == 0)
-            .Select(i => new BeatmapDataFull(i.SongTitle, i.SongAuthor, i.MapperName, i.SongCoverUrl, i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
+            .Select(i => new CCBeatmapDataFull(i.SongTitle, i.SongAuthor, i.MapperName, i.SongCoverUrl, i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
             .ToArray();
     }
     
@@ -100,7 +100,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         }
     }
     
-    public List<BeatmapData> GetMaps()
+    public List<CCBeatmapData> GetMaps()
     {
         using var scope = scopeFactory.CreateScope();
         
@@ -110,7 +110,7 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
             .Include(i => i.Pools)
             .Where(i => i.Pools.Count == 0)
             .ToArray()
-            .Select(i => new BeatmapData(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
+            .Select(i => new CCBeatmapData(i.Guid, i.Hash, i.Difficulty, i.Category, i.MaxScore, i.DurationSeconds))
             .ToList();
     }
     
@@ -119,8 +119,8 @@ public class BeatmapPoolData(IServiceScopeFactory scopeFactory, ILogger<BeatmapP
         string songArtist,
         string mapperName,
         string coverUrl,
-        BeatmapData.DifficultyType difficulty,
-        BeatmapData.Category category,
+        CCBeatmapData.DifficultyType difficulty,
+        CCBeatmapData.Category category,
         int maxScore,
         int durationSeconds,
         int[]? poolIds = null)

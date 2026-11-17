@@ -16,7 +16,7 @@ public class MapPoolButtonInteractionModule(DiscordConfigHelper configHelper) : 
         var roles = guildUser.RoleIds.ToArray();
         
         var categoryOptions = configHelper.GetCategoriesFromRoles(roles).Select(i => new StringMenuSelectOptionProperties(i.ToString(), i.ToString()));
-        var difficultyOptions = Enum.GetNames<BeatmapData.DifficultyType>().Select(j => new StringMenuSelectOptionProperties(j, j));
+        var difficultyOptions = Enum.GetNames<CCBeatmapData.DifficultyType>().Select(j => new StringMenuSelectOptionProperties(j, j));
         
         var modal = new ModalProperties("submitMapFromBeatsaverModal", "Submit From BeatSaver")
         {

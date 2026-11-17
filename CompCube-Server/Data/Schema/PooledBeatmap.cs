@@ -18,10 +18,10 @@ public class PooledBeatmap
     public required string Hash { get; set; }
     
     [Required]
-    public required BeatmapData.Category Category { get; set; }
+    public required CCBeatmapData.Category Category { get; set; }
     
     [Required]
-    public required BeatmapData.DifficultyType Difficulty { get; set; }
+    public required CCBeatmapData.DifficultyType Difficulty { get; set; }
     
     [Required]
     public required ulong PoolerId { get; set; }

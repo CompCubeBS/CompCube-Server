@@ -23,7 +23,7 @@ public class DummyConnectedClient : IConnectedClient
     
     private UserProfile? _userInfo;
     
-    private List<BeatmapData> _picks = [];
+    private List<CCBeatmapData> _picks = [];
 
     public void Init(UserProfile userInfo)
     {

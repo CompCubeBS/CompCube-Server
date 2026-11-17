@@ -4,9 +4,9 @@ namespace CompCube_Server.Interfaces;
 
 public interface IDealer
 {
-    public BeatmapData[] PullNewCards(int count);
+    public CCBeatmapData[] PullNewCards(int count);
 
-    public void AddDiscarded(BeatmapData[] disallowedMaps);
+    public void AddDiscarded(CCBeatmapData[] disallowedMaps);
 
-    public BeatmapData[] CompleteDeck(BeatmapData[] currentDeck, int targetSize);
+    public CCBeatmapData[] CompleteDeck(CCBeatmapData[] currentDeck, int targetSize);
 }

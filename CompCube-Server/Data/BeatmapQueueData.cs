@@ -11,7 +11,7 @@ public class BeatmapQueueData(
     BeatSaverService beatSaverService,
     ILogger<BeatmapQueueData> logger)
 {
-    public void AddBeatmap(string hash, BeatmapData.Category category, BeatmapData.DifficultyType difficulty, ulong poolerId, ulong threadId)
+    public void AddBeatmap(string hash, CCBeatmapData.Category category, CCBeatmapData.DifficultyType difficulty, ulong poolerId, ulong threadId)
     {
         using var scope = scopeFactory.CreateScope();
         
