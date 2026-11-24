@@ -10,6 +10,12 @@ public class TimeoutManager(ConfigHelper configHelper)
 
     public void TimeoutUser(string id)
     {
+        if (_timeouts.ContainsKey(id))
+        {
+            _timeouts[id] = DateTime.Now.Add(new TimeSpan(0, configHelper.TimeoutTime, 0));
+            return;
+        }
+        
         _timeouts.Add(id, DateTime.Now.Add(new TimeSpan(0, configHelper.TimeoutTime, 0)));
     }
 
