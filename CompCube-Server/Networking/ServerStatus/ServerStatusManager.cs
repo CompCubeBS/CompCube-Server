@@ -21,17 +21,12 @@ public class ServerStatusManager(IConfiguration config)
     public CompCube_Models.Models.Server.ServerStatus GetServerStatus()
     {
         var serverSection = config.GetSection("Gameplay");
-
-        var allowedGameVersions = serverSection.GetSection("AllowedGameVersions").Get<string[]>();
-
-        if (allowedGameVersions == null)
-            throw new Exception("Could not parse allowed game versions!");
         
         var allowedModVersions = serverSection.GetSection("AllowedModVersions").Get<string[]>();
         
         if (allowedModVersions == null)
             throw new Exception("Could not parse allowed mod versions!");
         
-        return new CompCube_Models.Models.Server.ServerStatus(allowedGameVersions, allowedModVersions, State);
+        return new CompCube_Models.Models.Server.ServerStatus(allowedModVersions, State);
     }
 }
