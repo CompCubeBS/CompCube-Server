@@ -38,7 +38,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
             .Include(i => i.Flairs)
             .Include(i => i.CompetetiveStatistics)
             .Where(i => i.Flairs.Any(j => j.Permissions.Contains(permissionFilter)) || i.Permissions.Contains(permissionFilter))
-            .Select(i => GetFullUserProfileFromModel(i, context))
+            .Select(i => GetFullUserProfileFromModel(i, context, configHelper))
             .ToArray();
     }
 
@@ -421,7 +421,7 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         if (user == null)
             return null;
 
-        return GetFullUserProfileFromModel(user, context);
+        return GetFullUserProfileFromModel(user, context, configHelper);
     }
 
     public UserProfile? GetUserProfileByPlatformId(string platformId, int season = -1)
@@ -480,11 +480,11 @@ public class UserData(IServiceScopeFactory scopeFactory, ConfigHelper configHelp
         info.BestWinStreak
         );
     
-    private UserProfileFull GetFullUserProfileFromModel(User user, DataContext context) => new(
+    private static UserProfileFull GetFullUserProfileFromModel(User user, DataContext context, ConfigHelper helper) => new(
         user.Username,
         user.PlatformId,
         user.BeatKhanaId,
-        $"{configHelper.ApiUrl}/api/user/id/{user.PlatformId}/avatar",
+        $"{helper.ApiUrl}/api/user/id/{user.PlatformId}/avatar",
         GetFlairsFromModel(user.Flairs),
         user.Banned,
         user.LastPlayed,

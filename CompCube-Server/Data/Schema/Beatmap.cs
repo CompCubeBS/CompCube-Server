@@ -16,13 +16,13 @@ public class Beatmap
     [MaxLength(128)]
     public string? SongTitle { get; set; }
     
-    [MaxLength(64)]
+    [MaxLength(128)]
     public string? SongAuthor { get; set; }
     
-    [MaxLength(64)]
+    [MaxLength(128)]
     public string? SongCoverUrl { get; set; }
     
-    [MaxLength(64)]
+    [MaxLength(128)]
     public string? MapperName { get; set; }
     
     [Required]
