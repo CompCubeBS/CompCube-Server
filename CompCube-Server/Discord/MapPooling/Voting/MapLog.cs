@@ -22,7 +22,7 @@ public class MapLog(RestClient restClient, BeatSaverService beatSaver, DiscordCo
     {
         var data = await GetMapDataFromGuildThread(thread);
         
-        await restClient.SendMessageAsync(configHelper.MapPoolLoggingChannel,
+        await restClient.SendMessageAsync(configHelper.DeniedLoggingChannel,
             $"[❌{(inactivity ? "💤" : string.Empty)}] {data.Item1} ({data.Item2}) has been denied.");
     }
 
