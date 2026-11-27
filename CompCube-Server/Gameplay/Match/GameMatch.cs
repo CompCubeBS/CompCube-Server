@@ -260,7 +260,7 @@ public class GameMatch(ILogger<GameMatch> logger, BeatmapPoolData beatmapPoolDat
             userData.IncrementTotalGames(loser.UserProfile.PlatformId);
         
             userData.IncrementWins(winner.UserProfile.PlatformId);
-            userData.ResetWinstreak(winner.UserProfile.PlatformId);
+            userData.ResetWinstreak(loser.UserProfile.PlatformId);
             
             userData.UpdateUserLastPlayedTime(winner.UserProfile.PlatformId);
             userData.UpdateUserLastPlayedTime(loser.UserProfile.PlatformId);

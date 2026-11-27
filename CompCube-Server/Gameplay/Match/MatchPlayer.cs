@@ -151,6 +151,9 @@ public class MatchPlayer : IDisposable
             connectedClient.OnReplayRequest -= _handleReplayRequestWrapper;
 
             var sanitized = packet.WantsToReplay && RemainingReplays > 0;
+
+            if (sanitized)
+                RemainingReplays--;
             
             tcs.SetResult(sanitized);
         }
